@@ -1,34 +1,35 @@
 {
-    "name": "natour",
-    "version": "1.0.0",
-    "description": "Learning node, express and mongoDB",
-    "main": "app.js",
-    "scripts": {
-        "start:dev": "nodemon server.js",
-        "start:prod": "NODE_ENV=production nodemon server.js"
-    },
-    "author": "okcomputer",
-    "license": "ISC",
-    "dependencies": {
-        "dotenv": "^8.2.0",
-        "express": "^4.17.1",
-        "mongoose": "^5.11.16",
-        "morgan": "^1.10.0",
-        "slugify": "^1.4.6",
-        "validator": "^13.5.2"
-    },
-    "devDependencies": {
-        "eslint": "^7.19.0",
-        "eslint-config-airbnb": "^18.2.1",
-        "eslint-config-prettier": "^7.2.0",
-        "eslint-plugin-import": "^2.22.1",
-        "eslint-plugin-jsx-a11y": "^6.4.1",
-        "eslint-plugin-node": "^11.1.0",
-        "eslint-plugin-prettier": "^3.3.1",
-        "eslint-plugin-react": "^7.22.0",
-        "prettier": "^2.2.1"
-    },
-    "engines": {
-        "node": ">=10.0.0"
-    }
+  "name": "natour",
+  "version": "1.0.0",
+  "description": "Learning node, express and mongoDB",
+  "main": "app.js",
+  "scripts": {
+    "start:dev": "nodemon server.js",
+    "start:prod": "NODE_ENV=production nodemon server.js",
+    "debug": "ndb server.js"
+  },
+  "author": "okcomputer",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "mongoose": "^5.11.16",
+    "morgan": "^1.10.0",
+    "slugify": "^1.4.6",
+    "validator": "^13.5.2"
+  },
+  "devDependencies": {
+    "eslint": "^7.19.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-config-prettier": "^7.2.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "eslint-plugin-react": "^7.22.0",
+    "prettier": "^2.2.1"
+  },
+  "engines": {
+    "node": ">=10.0.0"
+  }
 }
