@@ -9,7 +9,6 @@ const sendErrorDev = (err, res) => {
 
 const sendErrorProd = (err, res) => {
   // Operational, trusted error: send message to client
-
   if (err.isOperational) {
     res.status(err.statusCode).json({
       status: err.status,
@@ -23,7 +22,7 @@ const sendErrorProd = (err, res) => {
   // 2) Send generic message
   res.status(500).json({
     status: 'error',
-    message: 'Something went very wrong',
+    message: 'Something went very wrong :(',
   });
 };
 
@@ -32,8 +31,8 @@ module.exports = (err, req, res, next) => {
   err.status = err.status || 'error';
 
   if (process.env.NODE_ENV === 'development') {
-    sendErrorDev(err, req);
+    sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === 'production') {
-    sendErrorProd(err, req);
+    sendErrorProd(err, res);
   }
 };
