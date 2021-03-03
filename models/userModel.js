@@ -58,6 +58,13 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+userSchema.pre('save', function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
+
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
 // Instance method: is available on all documents of certain collection
 userSchema.methods.correctPassword = async function (
   candidatePassword,
