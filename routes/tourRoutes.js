@@ -5,6 +5,7 @@ const reviewRoutes = require('./reviewRoutes');
 
 const router = express.Router();
 
+// Will take you to '/'
 router.use('/:tourId/reviews', reviewRoutes);
 
 router
