@@ -1,6 +1,5 @@
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const { modelNames } = require('mongoose');
 
 exports.deleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
