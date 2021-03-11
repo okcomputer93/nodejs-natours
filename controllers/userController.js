@@ -3,6 +3,11 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const factory = require('./handlerFactory');
 
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+};
+
 const filterObj = (obj, ...allowedFields) =>
   Object.keys(obj).reduce((acc, el) => {
     if (allowedFields.includes(el)) {
