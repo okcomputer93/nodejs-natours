@@ -76,17 +76,10 @@ reviewSchema.post('save', function () {
   this.constructor.calcAverageRatings(this.tour);
 });
 
-// findByIdAndUpdate
-// findByIdAndDelete
-reviewSchema.pre(/^findOneAnd/, async function (next) {
-  this.r = await this.findOne();
-  console.log(this.r);
-  next();
-});
-
-reviewSchema.post(/^findOneAnd/, async function () {
-  await this.r.constructor.calcAverageRatings(this.r.tour);
-});
+reviewSchema.post(
+  /^findOneAnd/,
+  async (doc) => await doc.constructor.calcAverageRatings(doc.tour)
+);
 
 const Review = mongoose.model('Review', reviewSchema);
 
