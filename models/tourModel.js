@@ -173,13 +173,7 @@ tourSchema.post(/^find/, function (docs, next) {
 });
 
 // Aggregation middleware
-tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({
-    $match: { secretTour: { $ne: true } },
-  });
-  console.log(this.pipeline());
-  next();
-});
+// $geoNear is only valid as the first stage in a pipeline
 
 const Tour = mongoose.model('Tour', tourSchema);
 
