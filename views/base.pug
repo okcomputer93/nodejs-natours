@@ -1,1 +1,17 @@
-h1 The Park Camper
+doctype html
+html
+    head
+        //- Interpolation
+        title Natours | #{tour}
+        link(rel="stylesheet", href="css/style.css")
+        link(rel="shortcut icon", href="img/favicon.png", type="image/png")
+    
+    body
+        //- Buffer code
+        h1= tour
+        h2= user.toUpperCase()
+        
+        //- Unbuffer code
+        - const x = 9;
+        h2= 2 * x
+        p Some random text
