@@ -1,6 +1,5 @@
 /* eslint-disable */
 const login = async (email, password) => {
-  console.log(email, password);
   const body = JSON.stringify({
     email,
     password,
@@ -21,9 +20,14 @@ const login = async (email, password) => {
       throw Error(data.message);
     }
 
-    console.log(data);
+    if (data.status === 'success') {
+      alert('Logged in successfully');
+      setTimeout(() => {
+        location.assign('/');
+      }, 1500);
+    }
   } catch (error) {
-    console.log(error);
+    alert(error);
   }
 };
 

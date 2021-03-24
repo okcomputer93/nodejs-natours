@@ -4,3 +4,6 @@ module.exports = (fn) => {
     fn(req, res, next).catch(next);
   };
 };
+//* To remember:
+//* .catch(next) = catch(err => next(err))
+//* DUHH
