@@ -1,5 +1,7 @@
 /* eslint-disable */
-const login = async (email, password) => {
+import { showAlert } from './alerts';
+export const login = async (email, password) => {
+  console.log(email, password);
   const body = JSON.stringify({
     email,
     password,
@@ -21,19 +23,12 @@ const login = async (email, password) => {
     }
 
     if (data.status === 'success') {
-      alert('Logged in successfully');
+      showAlert('success', 'Logged in successfully');
       setTimeout(() => {
         location.assign('/');
       }, 1500);
     }
   } catch (error) {
-    alert(error);
+    showAlert('error', error);
   }
 };
-
-document.querySelector('.form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const email = e.target.querySelector('#email').value;
-  const password = e.target.querySelector('#password').value;
-  login(email, password);
-});
