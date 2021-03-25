@@ -119,38 +119,42 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 
 // Only for rendered pages, no errors!
-exports.isLoggedIn = catchAsync(async (req, res, next) => {
+exports.isLoggedIn = async (req, res, next) => {
   // 1) Getting token and check if it's there
   if (req.cookies.jwt) {
-    // 2) Verification token
-    const decoded = await promisify(jwt.verify)(
-      req.cookies.jwt,
-      process.env.JWT_SECRET
-    );
-    console.log(decoded);
-
-    // 3) Check if user still exists
-    const currentUser = await User.findById(decoded.id);
-    if (!currentUser) {
-      return next(
-        new AppError(
-          'The user belonging to this token does no longer exist.',
-          401
-        )
+    try {
+      // 2) Verification token
+      const decoded = await promisify(jwt.verify)(
+        req.cookies.jwt,
+        process.env.JWT_SECRET
       );
-    }
+      console.log(decoded);
 
-    // 4) Check if user changed password after the token was issued
-    // I wanna know if the user changed its password after log in
-    if (currentUser.changedPasswordAfter(decoded.iat)) {
+      // 3) Check if user still exists
+      const currentUser = await User.findById(decoded.id);
+      if (!currentUser) {
+        return next(
+          new AppError(
+            'The user belonging to this token does no longer exist.',
+            401
+          )
+        );
+      }
+
+      // 4) Check if user changed password after the token was issued
+      // I wanna know if the user changed its password after log in
+      if (currentUser.changedPasswordAfter(decoded.iat)) {
+        return next();
+      }
+
+      // There is a logged in user
+      res.locals.user = currentUser;
+    } catch (error) {
       return next();
     }
-
-    // There is a logged in user
-    res.locals.user = currentUser;
   }
   next();
-});
+};
 
 exports.restrictTo = (...roles) => (req, res, next) => {
   if (!roles.includes(req.user.role)) {
@@ -229,6 +233,14 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   //4) Log the user in, send JWT
   createSendToken(user, 200, res);
 });
+
+exports.logout = (req, res) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({ status: 'success' });
+};
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
   // 1) Get user from collection
