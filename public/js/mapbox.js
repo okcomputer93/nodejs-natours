@@ -40,6 +40,7 @@ export const displayMap = (locations) => {
 
   // Moving and zooming
   map.fitBounds(bounds, {
+    duration: 0,
     padding: {
       top: 200,
       bottom: 150,
