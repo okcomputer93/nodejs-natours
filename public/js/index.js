@@ -6,7 +6,8 @@ import { fetchRequest } from './utils/fetchRequest';
 const mapBox = document.querySelector('#map');
 const loginForm = document.querySelector('#login');
 const logoutBtn = document.querySelector('.nav__el--logout');
-const updateForm = document.querySelector('#update-data');
+const updateDataForm = document.querySelector('#update-data');
+const passwordUpdateForm = document.querySelector('#update-password');
 
 // VALUES
 
@@ -51,8 +52,8 @@ if (logoutBtn) {
   });
 }
 
-if (updateForm) {
-  updateForm.addEventListener('submit', (e) => {
+if (updateDataForm) {
+  updateDataForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const name = document.querySelector('#name').value;
     const email = document.querySelector('#email').value;
@@ -65,5 +66,32 @@ if (updateForm) {
       url: 'updateMe',
       messageOnSuccess: 'Data successfully updated',
     });
+  });
+}
+
+if (passwordUpdateForm) {
+  passwordUpdateForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btnSave = document.querySelector('.btn--save-password');
+    btnSave.textContent = 'Updating...';
+    const passwordCurrent = document.querySelector('#password-current');
+    const password = document.querySelector('#password');
+    const passwordConfirm = document.querySelector('#password-confirm');
+
+    await fetchRequest({
+      body: {
+        passwordCurrent: passwordCurrent.value,
+        password: password.value,
+        passwordConfirm: passwordConfirm.value,
+      },
+      method: 'PATCH',
+      url: 'updateMyPassword',
+      messageOnSuccess: 'Password successfully updated',
+    });
+    passwordCurrent.value = '';
+    password.value = '';
+    passwordConfirm.value = '';
+    btnSave.blur();
+    btnSave.textContent = 'Save Password';
   });
 }
