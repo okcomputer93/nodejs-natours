@@ -44,7 +44,7 @@ const filterObj = (obj, ...allowedFields) =>
   }, {});
 
 exports.updateMe = catchAsync(async (req, res, next) => {
-  // See file purposes:
+  // See multer file purposes:
   // console.log(req.file);
   // console.log(req.body);
 
@@ -59,6 +59,8 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   }
   // 2) Filtered out unwanted fields names that are not allowed to be updated
   const filteredBody = filterObj(req.body, 'name', 'email');
+
+  if (req.file) filteredBody.photo = req.file.filename;
 
   // 3) Update user document
   // We use findByIdAndUpdate since we're not requiring validators to run (in passwords)
