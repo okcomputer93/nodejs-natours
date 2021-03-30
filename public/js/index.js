@@ -57,11 +57,13 @@ if (updateDataForm) {
     e.preventDefault();
     const name = document.querySelector('#name').value;
     const email = document.querySelector('#email').value;
+    const photo = document.querySelector('#photo').files[0];
+    const form = new FormData();
+    form.append('name', name);
+    form.append('email', email);
+    form.append('photo', photo);
     fetchRequest({
-      body: {
-        name,
-        email,
-      },
+      body: form,
       method: 'PATCH',
       url: 'updateMe',
       messageOnSuccess: 'Data successfully updated',

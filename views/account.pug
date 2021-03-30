@@ -29,7 +29,7 @@ block content
       .user-view__content
         .user-view__form-container
           h2.heading-secondary.ma-bt-md Your account settings
-          //- form.form.form-user-data(method="post", action="/submit-user-data")
+          //- form.form.form-user-data(method="post", action="/submit-user-data", enctype="multipart/form-data")
           form.form.form-user-data#update-data
             .form__group
               label.form__label(for='name') Name
@@ -39,7 +39,8 @@ block content
               input#email.form__input(type='email', value=`${user.email}`, name="email", required)
             .form__group.form__photo-upload
               img.form__user-photo(src=`img/users/${user.photo}`, alt='User photo')
-              a.btn-text(href='') Choose a new photo
+              input.form__upload(type="file", accept="image/*", name="photo", id="photo")
+              label(for="photo") Select a photo
             .form__group.right
               button.btn.btn--small.btn--green(type="submit") Save settings
         .line &nbsp;
