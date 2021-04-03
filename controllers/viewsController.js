@@ -26,16 +26,10 @@ exports.getTour = catchAsync(async (req, res, next) => {
     return next(new AppError('There is no tour with that name.', 404));
   }
 
-  res
-    .set(
-      'Content-Security-Policy',
-      "default-src 'self' https://*.mapbox.com ;base-uri 'self';block-all-mixed-content;font-src 'self' https: data:;frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src https://cdnjs.cloudflare.com https://api.mapbox.com 'self' blob: ;script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests;"
-    )
-    .status(200)
-    .render('tour', {
-      title: `${tour.name} Tour`,
-      tour,
-    });
+  res.status(200).render('tour', {
+    title: `${tour.name} Tour`,
+    tour,
+  });
 });
 
 exports.getLoginForm = (req, res) => {
@@ -63,3 +57,55 @@ exports.updateUserData = catchAsync(async (req, res, next) => {
   );
   res.status(301).redirect('/me');
 });
+
+// Thanks for responding. I used your suggestion for a while and it worked great, then as I progressed through the course, there were still issues. I have put together a singular content security policy inside my app.js as follows:
+
+// app.use(
+//   helmet({
+//     contentSecurityPolicy: {
+//       directives: {
+//         defaultSrc: ["'self'", 'data:', 'blob:', 'https:', 'ws:'],
+//         baseUri: ["'self'"],
+//         fontSrc: ["'self'", 'https:', 'data:'],
+//         scriptSrc: [
+//           "'self'",
+//           'https:',
+//           'http:',
+//           'blob:',
+//           'https://*.mapbox.com',
+//           'https://js.stripe.com',
+//           'https://m.stripe.network',
+//           'https://*.cloudflare.com',
+//         ],
+//         frameSrc: ["'self'", 'https://js.stripe.com'],
+//         objectSrc: ["'none'"],
+//         styleSrc: ["'self'", 'https:', "'unsafe-inline'"],
+//         workerSrc: [
+//           "'self'",
+//           'data:',
+//           'blob:',
+//           'https://*.tiles.mapbox.com',
+//           'https://api.mapbox.com',
+//           'https://events.mapbox.com',
+//           'https://m.stripe.network',
+//         ],
+//         childSrc: ["'self'", 'blob:'],
+//         imgSrc: ["'self'", 'data:', 'blob:'],
+//         formAction: ["'self'"],
+//         connectSrc: [
+//           "'self'",
+//           "'unsafe-inline'",
+//           'data:',
+//           'blob:',
+//           'https://*.stripe.com',
+//           'https://*.mapbox.com',
+//           'https://*.cloudflare.com/',
+//           'https://bundle.js:*',
+//           'ws://127.0.0.1:*/',
+
+//         ],
+//         upgradeInsecureRequests: [],
+//       },
+//     },
+//   })
+// );

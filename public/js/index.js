@@ -1,6 +1,7 @@
 import '@babel/polyfill';
 import { displayMap } from './mapbox';
 import { fetchRequest } from './utils/fetchRequest';
+import { bookTour } from './stripe';
 
 // DOM ELEMENTS
 const mapBox = document.querySelector('#map');
@@ -8,6 +9,7 @@ const loginForm = document.querySelector('#login');
 const logoutBtn = document.querySelector('.nav__el--logout');
 const updateDataForm = document.querySelector('#update-data');
 const passwordUpdateForm = document.querySelector('#update-password');
+const bookBtn = document.querySelector('#book-tour');
 
 // VALUES
 
@@ -28,7 +30,7 @@ if (loginForm) {
         password,
       },
       method: 'POST',
-      url: 'login',
+      url: 'users/login',
       messageOnSuccess: 'Logged in successfully',
     });
 
@@ -44,7 +46,7 @@ if (logoutBtn) {
   logoutBtn.addEventListener('click', async () => {
     const response = await fetchRequest({
       method: 'GET',
-      url: 'logout',
+      url: 'users/logout',
     });
     if (response) {
       location.reload();
@@ -65,7 +67,7 @@ if (updateDataForm) {
     fetchRequest({
       body: form,
       method: 'PATCH',
-      url: 'updateMe',
+      url: 'users/updateMe',
       messageOnSuccess: 'Data successfully updated',
     });
   });
@@ -87,7 +89,7 @@ if (passwordUpdateForm) {
         passwordConfirm: passwordConfirm.value,
       },
       method: 'PATCH',
-      url: 'updateMyPassword',
+      url: 'users/updateMyPassword',
       messageOnSuccess: 'Password successfully updated',
     });
     passwordCurrent.value = '';
@@ -95,5 +97,13 @@ if (passwordUpdateForm) {
     passwordConfirm.value = '';
     btnSave.blur();
     btnSave.textContent = 'Save Password';
+  });
+}
+
+if (bookBtn) {
+  bookBtn.addEventListener('click', (e) => {
+    e.target.textContent = 'Processing...';
+    const { tourId } = e.target.dataset;
+    bookTour(tourId);
   });
 }

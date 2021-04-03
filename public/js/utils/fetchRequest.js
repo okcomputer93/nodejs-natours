@@ -1,5 +1,11 @@
 import { showAlert } from '../alerts';
-export const fetchRequest = async ({ body, method, url, messageOnSuccess }) => {
+export const fetchRequest = async ({
+  body,
+  method,
+  url,
+  messageOnSuccess,
+  returnData = false,
+}) => {
   let headers = { 'Content-Type': 'application/json' };
   let bodyData = JSON.stringify(body);
 
@@ -15,7 +21,7 @@ export const fetchRequest = async ({ body, method, url, messageOnSuccess }) => {
   }
 
   try {
-    const response = await fetch(`http://127.0.0.1:3000/api/v1/users/${url}`, {
+    const response = await fetch(`http://127.0.0.1:3000/api/v1/${url}`, {
       method: method,
       mode: 'cors',
       headers,
@@ -28,9 +34,13 @@ export const fetchRequest = async ({ body, method, url, messageOnSuccess }) => {
       throw Error(data.message);
     }
 
-    if (data.status === 'success') {
+    if (data.status === 'success' && !returnData) {
       if (messageOnSuccess) showAlert('success', messageOnSuccess);
       return true;
+    }
+
+    if (returnData) {
+      return data;
     }
   } catch (error) {
     console.error(error);
