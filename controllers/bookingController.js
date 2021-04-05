@@ -1,8 +1,8 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Tour = require('../models/tourModel');
+const Booking = require('../models/bookingModel');
 const catchAsync = require('../utils/catchAsync');
 const factory = require('./handlerFactory');
-const AppError = require('../utils/appError');
 
 exports.getCheckoutSession = catchAsync(async (req, res, next) => {
   // 1) Get the currently booked tour
@@ -22,13 +22,15 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
             description: tour.summary,
             images: [`https://www.natours.dev/img/tours/${tour.imageCover}`],
           },
-          unit_amount: tour.price * 1000,
+          unit_amount: tour.price * 100,
         },
         quantity: 1,
       },
     ],
     mode: 'payment',
-    success_url: `${req.protocol}://${req.get('host')}/`,
+    success_url: `${req.protocol}://${req.get('host')}/?tour=${
+      req.params.tourId
+    }&user=${req.user.id}&price=${tour.price}`,
     cancel_url: `${req.protocol}://${req.get('host')}/tour/${tour.slug}`,
   });
 
@@ -37,4 +39,16 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
     status: 'success',
     session,
   });
+});
+
+exports.createBookingCheckout = catchAsync(async (req, res, next) => {
+  //TODO: Unsecure: Everyone can make booking without paying, just hitting this endpoint
+  const { tour, user, price } = req.query;
+
+  // No query string then next()
+  if (!tour && !user && !price) return next();
+  await Booking.create({ tour, user, price });
+
+  // Redirect without query string
+  res.redirect(req.originalUrl.split('?')[0]);
 });
