@@ -45,6 +45,27 @@ exports.getAccount = (req, res, next) => {
   });
 };
 
+exports.getMyTours = catchAsync(async (req, res, next) => {
+  // 1) find all bookings
+  const bookings = await Booking.find({ user: req.user.id });
+  // For virtual populate
+  // .populate({
+  //   path: 'bookings',
+  // });
+
+  // 2) find tours with the returned IDs
+  const tourIds = bookings.map((booking) => booking.tour);
+  const tours = await Tour.find({ _id: { $in: tourIds } });
+
+  // For virtual populate
+  // const tours = bookings.map((booking) => booking.tour);
+
+  res.status(200).render('overview', {
+    title: 'My Tours',
+    tours,
+  });
+});
+
 exports.updateUserData = catchAsync(async (req, res, next) => {
   await User.findByIdAndUpdate(
     req.user.id,
