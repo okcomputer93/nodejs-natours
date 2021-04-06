@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
 const User = require('../models/userModel');
+const Tour = require('../models/tourModel');
+const Booking = require('../models/bookingModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const Email = require('../utils/email');
@@ -75,6 +77,18 @@ exports.login = catchAsync(async (req, res, next) => {
 
   // 3) If everything ok, send token to client
   createSendToken(user, 200, res);
+});
+
+exports.restrictForPurchased = catchAsync(async (req, res, next) => {
+  // Tour exists?
+  const bookings = await Booking.find({ user: req.user.id });
+  const tour = await Tour.findById(req.body.tour);
+  const isTourPurchased = bookings.find(
+    (booking) => booking.tour.id === tour.id
+  );
+  if (!isTourPurchased)
+    return next(new AppError('You can only review purchased tours!'));
+  next();
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
