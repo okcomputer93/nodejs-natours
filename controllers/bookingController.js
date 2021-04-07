@@ -53,6 +53,14 @@ exports.createBookingCheckout = catchAsync(async (req, res, next) => {
   res.redirect(req.originalUrl.split('?')[0]);
 });
 
+exports.setTourUserIds = (req, res, next) => {
+  if (!req.body.tour) req.body.tour = req.params.tourId;
+
+  if (!req.body.user) req.body.user = req.user.id;
+
+  next();
+};
+
 exports.getAllBookings = factory.getAll(Booking);
 
 exports.getBooking = factory.getOne(Booking);
