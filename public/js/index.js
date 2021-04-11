@@ -2,6 +2,7 @@ import '@babel/polyfill';
 import { displayMap } from './mapbox';
 import { fetchRequest } from './utils/fetchRequest';
 import { bookTour } from './stripe';
+import { showAlert } from './alerts';
 
 // DOM ELEMENTS
 const mapBox = document.querySelector('#map');
@@ -10,6 +11,12 @@ const logoutBtn = document.querySelector('.nav__el--logout');
 const updateDataForm = document.querySelector('#update-data');
 const passwordUpdateForm = document.querySelector('#update-password');
 const bookBtn = document.querySelector('#book-tour');
+const formDate = document.querySelector('#form-date');
+const modalDate = document.querySelector('#modal-date');
+const modalDateText = document.querySelector('#modal-date-text');
+const bookModalDate = document.querySelector('#modal-date-book');
+const cancelModalDate = document.querySelector('#modal-date-cancel');
+const dateOptions = document.querySelector('#dates');
 
 // VALUES
 
@@ -100,10 +107,78 @@ if (passwordUpdateForm) {
   });
 }
 
+const openDateModal = async (tourId) => {
+  dateOptions.disabled = false;
+  bookModalDate.disabled = false;
+  modalDateText.textContent = 'Just one more step...';
+  modalDate.style.display = 'block';
+  dateOptions.innerHTML = `
+    <option class="select__option" value="">Please select a booking date</option>
+  `;
+  const tour = await fetchRequest({
+    method: 'GET',
+    url: `tours/${tourId}`,
+    returnData: true,
+  });
+  if (!tour) {
+    return showAlert('error', 'Sorry this tour is not available');
+  }
+  const { startDates, participants, maxPerDay } = tour.data.data;
+  const leftParticipants = maxPerDay.map((el, index) => {
+    const left = el - participants[index];
+    if (left <= 0) return 0;
+    return left;
+  });
+  console.log(leftParticipants, 'left');
+  if (startDates.length <= 0 || leftParticipants.every((curr) => curr <= 0)) {
+    showAlert('error', 'All dates on this tour are booked out!');
+    dateOptions.disabled = true;
+    bookModalDate.disabled = true;
+    modalDateText.textContent = 'Sorry, this tour is booked out';
+    return;
+  }
+  const datesMarkup = startDates.map((date, index) => {
+    if (leftParticipants[index] <= 0) return;
+    const printableDate = new Date(date).toLocaleString('en-us', {
+      weekday: 'long', // long, short, narrow
+      day: 'numeric', // numeric, 2-digit
+      year: 'numeric', // numeric, 2-digit
+      month: 'short', // numeric, 2-digit, long, short, narrow
+      hour: 'numeric', // numeric, 2-digit
+      minute: 'numeric', // numeric, 2-digit
+      second: 'numeric', // numeric, 2-digit
+    });
+    return `
+      <option class="select__option" value="${date}">${printableDate}</option>
+    `;
+  });
+  dateOptions.insertAdjacentHTML('beforeend', datesMarkup);
+  createBookListener(tourId);
+};
+
+const createBookListener = (tourId) => {
+  formDate.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const dateValue = event.target.querySelector('#dates').value;
+    console.log(dateValue);
+    if (!dateValue) console.error('Please select a date');
+    bookTour(tourId, dateValue);
+  });
+};
+
 if (bookBtn) {
-  bookBtn.addEventListener('click', (e) => {
+  bookBtn.addEventListener('click', async (e) => {
     e.target.textContent = 'Processing...';
     const { tourId } = e.target.dataset;
-    bookTour(tourId);
+    await openDateModal(tourId);
+    e.target.textContent = 'See available dates';
   });
 }
+
+if (cancelModalDate) {
+  cancelModalDate.addEventListener('click', () => {
+    modalDate.style.display = 'none';
+  });
+}
+
+//TODO: Refactor all this mess!!

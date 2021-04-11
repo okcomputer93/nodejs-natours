@@ -49,7 +49,8 @@ block content
           h2.heading-secondary.ma-bt-lg Quick facts
           +overviewBox('Next date', tour.startDates[0].toLocaleString('en-us', {month: 'long', year: 'numeric'}), 'calendar')
           +overviewBox('Difficulty', tour.difficulty, 'trending-up')
-          +overviewBox('Participants', `${tour.maxGroupSize} people`, 'user')
+          - const tourTotal = tour.maxPerDay.reduce((acc, curr) => acc + curr, 0)
+          +overviewBox('Participants', `${tourTotal} people`, 'user')
           +overviewBox('Rating', `${tour.ratingsAverage} / 5`, 'star')
 
 
@@ -83,6 +84,39 @@ block content
       each review in tour.reviews
         +reviewCard(review)
 
+  .modal#modal-date
+    .modal__box
+      .modal__content
+        .modal__column.modal__column--left
+          //- span.modal__close &times;
+          h2.modal__title #{tour.name} tour
+          .heading-box__detail.modal__element
+              svg.heading-box__icon.modal__icon
+                use(xlink:href='/img/icons.svg#icon-map-pin')
+              span.heading-box__text #{tour.startLocation.description}
+          .heading-box__detail.modal__element
+              svg.heading-box__icon.modal__icon
+                use(xlink:href='/img/icons.svg#icon-clock')
+              span.heading-box__text #{tour.duration} days
+          .heading-box__detail.modal__element
+              svg.heading-box__icon.modal__icon
+                use(xlink:href='/img/icons.svg#icon-user')
+              span.heading-box__text #{tourTotal} people
+          .heading-box__detail.modal__element
+              svg.heading-box__icon.modal__icon
+                use(xlink:href='/img/icons.svg#icon-trending-up')
+              span.heading-box__text #{tour.difficulty}
+          img.modal__img(src=`/img/tours/${tour.images[0]}`, alt="Tour picture")
+        .modal__column.modal__column--right
+          p.modal__desc #{tour.summary}.
+          p.modal__text#modal-date-text Just one step more...
+          form#form-date(action="")
+            select.select#dates(name="dates" required)
+              option.select__option(value="") Please select a booking date
+            .modal__buttons
+              button.btn.btn--green.btn--small#modal-date-book(type="submit") Book Now
+              button.btn.btn--white.btn--small.btn--cancel#modal-date-cancel(type="button") Cancel
+      .modal__background
 
   section.section-cta
     .cta
@@ -95,7 +129,7 @@ block content
         p.cta__text #{tour.duration} days. 1 adventure. Infinite memories. Make it yours today!
 
         if user
-          a.btn.btn--green.span-all-rows#book-tour(data-tour-id=`${tour.id}`) Book tour now!
+          a.btn.btn--green.span-all-rows#book-tour(data-tour-id=`${tour.id}`) See available dates!
         else 
           a.btn.btn--green.span-all-rows(href="/login") Login to book tour
 

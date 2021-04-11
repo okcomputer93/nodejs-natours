@@ -21,9 +21,10 @@
                 use(xlink:href='/img/icons.svg#icon-flag')    
             span= `${tour.locations.length} stops`
         .card__data
+            - const total = tour.maxPerDay.reduce((acc, curr) => acc + curr, 0)
             svg.card__icon
                 use(xlink:href='/img/icons.svg#icon-user')    
-            span #{tour.maxGroupSize} people
+            span #{total} people
     .card__footer
         p
             span.card__footer-value $#{tour.price}

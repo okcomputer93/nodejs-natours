@@ -24,10 +24,6 @@ const tourSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'A tour must have a duration'],
     },
-    maxGroupSize: {
-      type: Number,
-      required: [true, 'A tour must have a group size'],
-    },
     difficulty: {
       type: String,
       required: [true, 'A tour must have a difficulty'],
@@ -81,6 +77,25 @@ const tourSchema = new mongoose.Schema(
       select: false,
     },
     startDates: [Date],
+    maxPerDay: {
+      type: [Number],
+      validate: {
+        validator: function (val) {
+          return val.length === this.startDates.length;
+        },
+      },
+    },
+    participants: {
+      type: [Number],
+      default: function () {
+        return this.startDates.map(() => 0);
+      },
+      validate: {
+        validator: function (val) {
+          return val.length === this.startDates.length;
+        },
+      },
+    },
     slug: String,
     secretTour: {
       type: Boolean,

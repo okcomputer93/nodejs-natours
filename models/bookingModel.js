@@ -13,7 +13,7 @@ const bookingSchema = new mongoose.Schema({
   },
   price: {
     type: Number,
-    require: [true, 'Booking must hava a price.'],
+    require: [true, 'Booking must have a price.'],
   },
   createdAt: {
     type: Date,
@@ -22,6 +22,10 @@ const bookingSchema = new mongoose.Schema({
   paid: {
     type: Boolean,
     default: true,
+  },
+  tourDate: {
+    type: Date,
+    require: [true, 'Booking must have a booking date'],
   },
 });
 

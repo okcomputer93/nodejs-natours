@@ -3,10 +3,32 @@ const Tour = require('../models/tourModel');
 const Booking = require('../models/bookingModel');
 const catchAsync = require('../utils/catchAsync');
 const factory = require('./handlerFactory');
+const AppError = require('../utils/appError');
 
 exports.getCheckoutSession = catchAsync(async (req, res, next) => {
   // 1) Get the currently booked tour
   const tour = await Tour.findById(req.params.tourId);
+
+  // Update participants on date
+  const { date } = req.query;
+  if (!date) return next(new AppError('Please provide a valid date', 403));
+
+  const formatedDate = new Date(date).toString();
+  const day = tour.startDates.findIndex(
+    (element) => new Date(element).toString() === formatedDate
+  );
+  if (day === -1) return next(new AppError('Please provide a valid date', 403));
+
+  if (tour.participants[day] >= tour.maxPerDay[day])
+    return next(new AppError('Sorry, this date is booked out!', 403));
+  tour.participants = tour.participants.map((el, index) =>
+    index === day ? el + 1 : el
+  );
+  await tour.save();
+  const printableDate = formatedDate.toLocaleString('en-us', {
+    month: 'long',
+    year: 'numeric',
+  });
 
   // 2) Create checkout session
   const session = await stripe.checkout.sessions.create({
@@ -19,7 +41,7 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
           currency: 'usd',
           product_data: {
             name: `${tour.name} Tour`,
-            description: tour.summary,
+            description: `${tour.summary} on ${printableDate}`,
             images: [`https://www.natours.dev/img/tours/${tour.imageCover}`],
           },
           unit_amount: tour.price * 100,
@@ -28,10 +50,14 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
       },
     ],
     mode: 'payment',
-    success_url: `${req.protocol}://${req.get('host')}/?tour=${
+    success_url: `${req.protocol}://${req.get('host')}/?tourId=${
       req.params.tourId
-    }&user=${req.user.id}&price=${tour.price}`,
-    cancel_url: `${req.protocol}://${req.get('host')}/tour/${tour.slug}`,
+    }&user=${req.user.id}&price=${tour.price}&tourDate=${req.query.date}`,
+    cancel_url: `${req.protocol}://${req.get('host')}/?tourId=${
+      req.params.tourId
+    }&user=${req.user.id}&price=${tour.price}&tourDate=${
+      req.query.date
+    }&cancel=true`,
   });
 
   // 3) Create session as respone
@@ -43,11 +69,27 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
 
 exports.createBookingCheckout = catchAsync(async (req, res, next) => {
   //TODO: Unsecure: Everyone can make booking without paying, just hitting this endpoint
-  const { tour, user, price } = req.query;
+  const { tourId, user, price, tourDate, cancel } = req.query;
+
+  //TODO: Temporary solution: A participant is deleted everytime you hit this endpoint with cancel=true
+  if (cancel) {
+    const tour = await Tour.findById(tourId);
+    const formatedDate = new Date(tourDate).toString();
+    const day = tour.startDates.findIndex(
+      (element) => new Date(element).toString() === formatedDate
+    );
+    tour.participants = tour.participants.map((el, index) =>
+      index === day ? el - 1 : el
+    );
+    await tour.save();
+
+    //* JIJI you tricky boy :^)
+    return res.redirect(`${req.protocol}://${req.get('host')}/`);
+  }
 
   // No query string then next()
-  if (!tour && !user && !price) return next();
-  await Booking.create({ tour, user, price });
+  if (!tourId && !user && !price && !tourDate) return next();
+  await Booking.create({ tour: tourId, user, price, tourDate });
 
   // Redirect without query string
   res.redirect(req.originalUrl.split('?')[0]);
