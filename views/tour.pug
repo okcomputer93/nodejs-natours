@@ -101,7 +101,7 @@ block content
           .heading-box__detail.modal__element
               svg.heading-box__icon.modal__icon
                 use(xlink:href='/img/icons.svg#icon-user')
-              span.heading-box__text #{tourTotal} people
+              span.heading-box__text #{tourTotal} people in total
           .heading-box__detail.modal__element
               svg.heading-box__icon.modal__icon
                 use(xlink:href='/img/icons.svg#icon-trending-up')
@@ -111,11 +111,12 @@ block content
           p.modal__desc #{tour.summary}.
           p.modal__text#modal-date-text Just one step more...
           form#form-date(action="")
-            select.select#dates(name="dates" required)
+            select.select#dates(name="dates" required disabled)
               option.select__option(value="") Please select a booking date
             .modal__buttons
-              button.btn.btn--green.btn--small#modal-date-book(type="submit") Book Now
+              button.btn.btn--green.btn--small#modal-date-book(type="submit" disabled) Book Now
               button.btn.btn--white.btn--small.btn--cancel#modal-date-cancel(type="button") Cancel
+        span.modal__close &times;
       .modal__background
 
   section.section-cta
