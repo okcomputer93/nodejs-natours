@@ -1,7 +1,6 @@
 import '@babel/polyfill';
 import { displayMap } from './mapbox';
 import { fetchRequest } from './utils/fetchRequest';
-import { openDateModal } from './modal.js';
 
 // DOM ELEMENTS
 const mapBox = document.querySelector('#map');
@@ -121,5 +120,3 @@ if (cancelModalDate) {
     modalDate.style.display = 'none';
   });
 }
-
-//TODO: Refactor all this mess!!
