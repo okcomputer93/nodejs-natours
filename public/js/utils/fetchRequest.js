@@ -1,4 +1,18 @@
 import { showAlert } from '../alerts';
+
+const ajax = async ({ url, method, headers, body }) => {
+  try {
+    return await fetch(`http://127.0.0.1:3000/api/v1/${url}`, {
+      method,
+      mode: 'cors',
+      headers,
+      body,
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const fetchRequest = async ({
   body,
   method,
@@ -21,9 +35,9 @@ export const fetchRequest = async ({
   }
 
   try {
-    const response = await fetch(`http://127.0.0.1:3000/api/v1/${url}`, {
-      method: method,
-      mode: 'cors',
+    const response = await ajax({
+      url,
+      method,
       headers,
       body: bodyData,
     });
@@ -41,6 +55,43 @@ export const fetchRequest = async ({
 
     if (returnData) {
       return data;
+    }
+  } catch (error) {
+    console.error(error);
+    showAlert('error', error);
+  }
+};
+
+export const fetchLogin = async (email, password) => {
+  try {
+    const response = await ajax({
+      url: 'users/login',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.error?.statusCode === 403) {
+      //TODO: On backend
+      setTimeout(() => {
+        location.assign('/confirmYourEmail');
+      }, 1500);
+    }
+
+    if (!response.ok) {
+      throw Error(data.message);
+    }
+
+    if (data.status === 'success') {
+      showAlert('success', 'Logged in successfully');
+      setTimeout(() => {
+        location.assign('/');
+      }, 1500);
     }
   } catch (error) {
     console.error(error);

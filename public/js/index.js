@@ -1,6 +1,7 @@
 import '@babel/polyfill';
 import { displayMap } from './mapbox';
 import { fetchRequest } from './utils/fetchRequest';
+import { fetchLogin } from './utils/fetchRequest';
 
 // DOM ELEMENTS
 const mapBox = document.querySelector('#map');
@@ -25,21 +26,7 @@ if (loginForm) {
     e.preventDefault();
     const email = document.querySelector('#email').value;
     const password = document.querySelector('#password').value;
-    const response = await fetchRequest({
-      body: {
-        email,
-        password,
-      },
-      method: 'POST',
-      url: 'users/login',
-      messageOnSuccess: 'Logged in successfully',
-    });
-
-    if (response) {
-      setTimeout(() => {
-        location.assign('/');
-      }, 1500);
-    }
+    fetchLogin(email, password);
   });
 }
 
