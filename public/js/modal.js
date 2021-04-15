@@ -96,6 +96,8 @@ const createBookButtonListener = (tourId) => {
   });
 };
 
-closeModal.addEventListener('click', () => {
-  modalDate.style.display = 'none';
-});
+if (closeModal) {
+  closeModal.addEventListener('click', () => {
+    modalDate.style.display = 'none';
+  });
+}
