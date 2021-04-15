@@ -77,7 +77,6 @@ export const fetchLogin = async (email, password) => {
     const data = await response.json();
 
     if (data.error?.statusCode === 403) {
-      //TODO: On backend
       setTimeout(() => {
         location.assign('/confirmYourEmail');
       }, 1500);

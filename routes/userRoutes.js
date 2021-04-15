@@ -12,6 +12,12 @@ router.post('/login', authController.login);
 router.get('/logout', authController.logout);
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
+router.get('/confirmEmail/:token', authController.confirmEmail);
+router.post(
+  '/resendEmail',
+  authController.restrictToNoEmailConfirmed,
+  authController.resendConfirmationEmail
+);
 
 // Protect all routes after this middleware
 router.use(authController.protect);

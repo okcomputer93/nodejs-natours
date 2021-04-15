@@ -2,6 +2,7 @@ import '@babel/polyfill';
 import { displayMap } from './mapbox';
 import { fetchRequest } from './utils/fetchRequest';
 import { fetchLogin } from './utils/fetchRequest';
+import { openDateModal } from './modal';
 
 // DOM ELEMENTS
 const mapBox = document.querySelector('#map');
@@ -12,6 +13,8 @@ const passwordUpdateForm = document.querySelector('#update-password');
 const bookBtn = document.querySelector('#book-tour');
 const modalDate = document.querySelector('#modal-date');
 const cancelModalDate = document.querySelector('#modal-date-cancel');
+
+const resendEmail = document.querySelector('#resend-email');
 
 // VALUES
 
@@ -37,7 +40,7 @@ if (logoutBtn) {
       url: 'users/logout',
     });
     if (response) {
-      location.reload();
+      location.assign('/');
     }
   });
 }
@@ -105,5 +108,15 @@ if (cancelModalDate) {
   modalDate.addEventListener('click', (event) => {
     if (event.target.id !== 'modal-date') return;
     modalDate.style.display = 'none';
+  });
+}
+
+if (resendEmail) {
+  resendEmail.addEventListener('click', () => {
+    fetchRequest({
+      url: 'users/resendEmail',
+      method: 'POST',
+      messageOnSuccess: 'Email resent, check your inbox',
+    });
   });
 }

@@ -9,16 +9,15 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const Email = require('../utils/email');
 
-const signToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, {
+const signToken = (name) =>
+  jwt.sign(name, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 
-const createSendToken = (user, statusCode, res) => {
-  const token = signToken(user._id);
+const createSendToken = (token, res, cookieName, lifeTime = 24) => {
   const cookieOptions = {
     expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES * 24 * 60 * 60 * 1000
+      Date.now() + process.env.JWT_COOKIE_EXPIRES * lifeTime * 60 * 60 * 1000
     ),
     // Only in encrypted conection
     secure: process.env.NODE_ENV === 'production',
@@ -26,18 +25,47 @@ const createSendToken = (user, statusCode, res) => {
     httpOnly: true,
   };
 
-  res.cookie('jwt', token, cookieOptions);
+  res.cookie(cookieName, token, cookieOptions);
+};
+
+const removeToken = (res, cookieName) => {
+  res.cookie(cookieName, 'invalid', {
+    expires: new Date(Date.now()),
+    httpOnly: true,
+  });
+};
+
+const sendTokenAndResponse = (user, res) => {
+  const token = signToken({ id: user._id });
+
+  createSendToken(token, res, 'jwt');
 
   // Remove password from output
   user.password = undefined;
 
-  res.status(statusCode).json({
+  res.status(200).json({
     status: 'success',
     token,
     data: {
       user,
     },
   });
+};
+
+const sendConfirmationEmail = async (user, emailUrl, next) => {
+  try {
+    await new Email(user, emailUrl).sendConfirmEmail();
+  } catch (error) {
+    user.confirmEmailToken = undefined;
+    user.emailTokenExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+    return next(
+      new AppError(
+        'There was an error sending the email. Try again later!',
+        500
+      )
+    );
+  }
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
@@ -50,12 +78,85 @@ exports.signup = catchAsync(async (req, res, next) => {
     role: req.body.role,
   });
 
+  // 1) Generate the random email token
+  const emailToken = newUser.createConfirmEmailToken();
+  // I'm not validating on save
+  await newUser.save({
+    validateBeforeSave: false,
+  });
+  const confirmEmailUrl = `${req.protocol}://${req.get(
+    'host'
+  )}/api/v1/users/confirmEmail/${emailToken}`;
+
+  await sendConfirmationEmail(newUser, confirmEmailUrl, next);
+
+  const token = signToken({ email: newUser.email });
+
+  createSendToken(token, res, 'natoursnoemail', 24);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Confirmation sent to email!',
+  });
+});
+
+exports.confirmEmail = catchAsync(async (req, res, next) => {
+  // 1) Get user based on the token
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
+
+  const user = await User.findOne({
+    confirmEmailToken: hashedToken,
+    emailTokenExpires: { $gt: Date.now() },
+  });
+
+  if (!user) return next(new AppError('Token is invalid or has expired', 400));
+
+  user.confirmEmailToken = undefined;
+  user.emailTokenExpires = undefined;
+  user.emailConfirmedAt = Date.now();
+  user.save({ validateBeforeSave: false });
+
+  removeToken(res, 'natoursnoemail');
+
   const url = `${req.protocol}://${req.get('host')}/me`;
-  console.log(url);
+  await new Email(user, url).sendWelcome();
 
-  await new Email(newUser, url).sendWelcome();
+  const token = signToken({ id: user._id });
 
-  createSendToken(newUser, 201, res);
+  createSendToken(token, res, 'jwt');
+
+  // Remove password from output
+  user.password = undefined;
+
+  res.status(201).json({
+    status: 'success',
+    token,
+    data: {
+      user,
+    },
+  });
+});
+
+exports.resendConfirmationEmail = catchAsync(async (req, res, next) => {
+  const { userEmail } = req;
+
+  const user = await User.findOne({ email: userEmail });
+  const emailToken = user.createConfirmEmailToken();
+  await user.save({
+    validateBeforeSave: false,
+  });
+  const confirmEmailUrl = `${req.protocol}://${req.get(
+    'host'
+  )}/api/v1/users/confirmEmail/${emailToken}`;
+  sendConfirmationEmail(user, confirmEmailUrl, next);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Confirmation sent to email!',
+  });
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -68,17 +169,70 @@ exports.login = catchAsync(async (req, res, next) => {
 
   // 2) Check if user exists && password is correct
   const user = await User.findOne({ email }).select('+password');
+
   // correctPassword is an instance method, see: userModel.js
-  console.log(user);
-  console.log(await user.correctPassword(password, user.password));
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     // Be vague on description -> email or password
     return next(new AppError('Incorrect email or password'), 401);
   }
 
+  // User has confirmed its email?
+  if (!user.emailConfirmedAt) {
+    // Send cookie
+    // I CURSE YOU!
+    const token = signToken({ email: user.email });
+
+    createSendToken(token, res, 'natoursnoemail', 24);
+
+    return next(new AppError('Please confirm your email before login!', 403));
+  }
+
   // 3) If everything ok, send token to client
-  createSendToken(user, 200, res);
+  // But before remove the curse!
+  removeToken(res, 'natoursnoemail');
+
+  console.log(user);
+
+  sendTokenAndResponse(user, res);
+});
+
+exports.restrictToNoEmailConfirmed = catchAsync(async (req, res, next) => {
+  const token = req.cookies.natoursnoemail;
+
+  if (!token) {
+    // Put logged user in locals
+    const jwtCookie = req.cookies.jwt;
+
+    if (jwtCookie) {
+      const decoded = await promisify(jwt.verify)(
+        jwtCookie,
+        process.env.JWT_SECRET
+      );
+
+      const currentUser = await User.findById(decoded.id);
+      res.locals.user = currentUser;
+    }
+
+    return next(new AppError('You are not authorized.', 403));
+  }
+
+  // 2) Verification token
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  // console.log(decoded);
+
+  // 3) Check if user still exists
+  const currentUser = await User.findOne({ email: decoded.email });
+  if (!currentUser) {
+    return next(
+      new AppError(
+        'The user belonging to this token does no longer exist.',
+        401
+      )
+    );
+  }
+  req.userEmail = decoded.email;
+  next();
 });
 
 exports.restrictForPurchased = catchAsync(async (req, res, next) => {
@@ -246,14 +400,11 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   // 3) Update changedPasswordAt property for the user
   //4) Log the user in, send JWT
-  createSendToken(user, 200, res);
+  sendTokenAndResponse(user, res);
 });
 
 exports.logout = (req, res) => {
-  res.cookie('jwt', 'loggedout', {
-    expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true,
-  });
+  removeToken(res, 'jwt');
   res.status(200).json({ status: 'success' });
 };
 
@@ -272,5 +423,5 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   await user.save();
 
   // 4) Log user in, send JWT
-  createSendToken(user, 200, res);
+  sendTokenAndResponse(user, res);
 });

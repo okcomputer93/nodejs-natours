@@ -80,6 +80,14 @@ exports.updateUserData = catchAsync(async (req, res, next) => {
   res.status(301).redirect('/me');
 });
 
+exports.getEmailConfirmationForm = catchAsync(async (req, res, next) => {
+  //Get user based on confirm-email cookie
+
+  res.status(200).render('confirmEmail', {
+    title: 'Confirm Your Email',
+  });
+});
+
 // Thanks for responding. I used your suggestion for a while and it worked great, then as I progressed through the course, there were still issues. I have put together a singular content security policy inside my app.js as follows:
 
 // app.use(
