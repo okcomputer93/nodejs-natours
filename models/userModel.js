@@ -53,6 +53,7 @@ const userSchema = new mongoose.Schema({
   confirmEmailToken: String,
   emailTokenExpires: Date,
   emailConfirmedAt: Date,
+  refreshToken: String,
   active: {
     type: Boolean,
     default: true,
@@ -103,12 +104,12 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   return false;
 };
 
+const crypToken = (token) =>
+  crypto.createHash('sha256').update(token).digest('hex');
+
 userSchema.methods.createPasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString('hex');
-  this.passwordResetToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
+  this.passwordResetToken = crypToken(resetToken);
 
   console.log({ resetToken }, this.passwordResetToken);
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
@@ -118,12 +119,17 @@ userSchema.methods.createPasswordResetToken = function () {
 
 userSchema.methods.createConfirmEmailToken = function () {
   const emailToken = crypto.randomBytes(32).toString('hex');
-  this.confirmEmailToken = crypto
-    .createHash('sha256')
-    .update(emailToken)
-    .digest('hex');
+  this.confirmEmailToken = crypToken(emailToken);
   this.emailTokenExpires = Date.now() + 10 * 60 * 1000;
   return emailToken;
+};
+
+userSchema.methods.createRefreshToken = function () {
+  // resfreshToken has no expiration date in db,
+  // If you want invalidate it, do it directly in DB
+  const refreshToken = crypto.randomBytes(32).toString('hex');
+  this.refreshToken = crypToken(refreshToken);
+  return refreshToken;
 };
 
 const User = mongoose.model('User', userSchema);

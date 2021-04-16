@@ -9,16 +9,14 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const Email = require('../utils/email');
 
-const signToken = (name) =>
+const signToken = (name, expiresIn) =>
   jwt.sign(name, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
+    expiresIn,
   });
 
 const createSendToken = (token, res, cookieName, lifeTime = 24) => {
   const cookieOptions = {
-    expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES * lifeTime * 60 * 60 * 1000
-    ),
+    expires: new Date(Date.now() + lifeTime * 60 * 60 * 1000),
     // Only in encrypted conection
     secure: process.env.NODE_ENV === 'production',
     // Cannot be acced or modified
@@ -36,7 +34,7 @@ const removeToken = (res, cookieName) => {
 };
 
 const sendTokenAndResponse = (user, res) => {
-  const token = signToken({ id: user._id });
+  const token = signToken({ id: user._id }, process.env.JWT_EXPIRES_IN);
 
   createSendToken(token, res, 'jwt');
 
@@ -90,7 +88,10 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   await sendConfirmationEmail(newUser, confirmEmailUrl, next);
 
-  const token = signToken({ email: newUser.email });
+  const token = signToken(
+    { email: newUser.email },
+    process.env.NOCONFIRMATIONEMAIL_EXPIRES_IN
+  );
 
   createSendToken(token, res, 'natoursnoemail', 24);
 
@@ -141,6 +142,7 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
 });
 
 exports.resendConfirmationEmail = catchAsync(async (req, res, next) => {
+  // Only in views works resendEmail, not in the API
   const { userEmail } = req;
 
   const user = await User.findOne({ email: userEmail });
@@ -181,7 +183,10 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!user.emailConfirmedAt) {
     // Send cookie
     // I CURSE YOU!
-    const token = signToken({ email: user.email });
+    const token = signToken(
+      { email: user.email },
+      process.env.NOCONFIRMATIONEMAIL_EXPIRES_IN
+    );
 
     createSendToken(token, res, 'natoursnoemail', 24);
 
@@ -192,28 +197,26 @@ exports.login = catchAsync(async (req, res, next) => {
   // But before remove the curse!
   removeToken(res, 'natoursnoemail');
 
-  console.log(user);
-
   sendTokenAndResponse(user, res);
 });
 
 exports.restrictToNoEmailConfirmed = catchAsync(async (req, res, next) => {
   const token = req.cookies.natoursnoemail;
 
+  // Put logged user in locals
+  const jwtCookie = req.cookies.jwt;
+
+  if (jwtCookie) {
+    const decoded = await promisify(jwt.verify)(
+      jwtCookie,
+      process.env.JWT_SECRET
+    );
+
+    const currentUser = await User.findById(decoded.id);
+    res.locals.user = currentUser;
+  }
+
   if (!token) {
-    // Put logged user in locals
-    const jwtCookie = req.cookies.jwt;
-
-    if (jwtCookie) {
-      const decoded = await promisify(jwt.verify)(
-        jwtCookie,
-        process.env.JWT_SECRET
-      );
-
-      const currentUser = await User.findById(decoded.id);
-      res.locals.user = currentUser;
-    }
-
     return next(new AppError('You are not authorized.', 403));
   }
 
@@ -359,7 +362,6 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     )}/api/v1/users/resetPassword/${resetToken}`;
     await new Email(user, resetURL).sendPasswordReset();
   } catch (err) {
-    console.log(err);
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save({ validateBeforeSave: false });
