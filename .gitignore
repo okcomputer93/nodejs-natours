@@ -2,3 +2,4 @@
 .vscode
 public/js/bundle.*
 .cache
+config.env
