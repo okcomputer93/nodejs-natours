@@ -119,7 +119,6 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
   user.confirmEmailToken = undefined;
   user.emailTokenExpires = undefined;
   user.emailConfirmedAt = Date.now();
-  user.refreshToken = undefined;
   const refreshToken = user.createRefreshToken();
   await user.save({ validateBeforeSave: false });
 
@@ -131,6 +130,8 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
   clientCookies.push(refreshToken, 'natoursrefreshtoken', 24);
   clientCookies.push(token, 'jwt');
   clientCookies.pull('natoursnoemail');
+
+  user.refreshToken = undefined;
 
   res.status(201).json({
     status: 'success',
