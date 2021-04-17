@@ -8,47 +8,12 @@ const Booking = require('../models/bookingModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const Email = require('../utils/email');
+const Cookies = require('../utils/cookiesHandler');
 
 const signToken = (name, expiresIn) =>
   jwt.sign(name, process.env.JWT_SECRET, {
     expiresIn,
   });
-
-const createSendToken = (token, res, cookieName, lifeTime = 24) => {
-  const cookieOptions = {
-    expires: new Date(Date.now() + lifeTime * 60 * 60 * 1000),
-    // Only in encrypted conection
-    secure: process.env.NODE_ENV === 'production',
-    // Cannot be acced or modified
-    httpOnly: true,
-  };
-
-  res.cookie(cookieName, token, cookieOptions);
-};
-
-const removeToken = (res, cookieName) => {
-  res.cookie(cookieName, 'invalid', {
-    expires: new Date(Date.now()),
-    httpOnly: true,
-  });
-};
-
-const sendTokenAndResponse = (user, res) => {
-  const token = signToken({ id: user._id }, process.env.JWT_EXPIRES_IN);
-
-  createSendToken(token, res, 'jwt');
-
-  // Remove password from output
-  user.password = undefined;
-
-  res.status(200).json({
-    status: 'success',
-    token,
-    data: {
-      user,
-    },
-  });
-};
 
 const sendConfirmationEmail = async (user, emailUrl, next) => {
   try {
@@ -68,17 +33,17 @@ const sendConfirmationEmail = async (user, emailUrl, next) => {
 
 // This point is hitting after you are sure the jwt is expired
 const refreshJWTToken = async (req, res, next) => {
-  console.log('here?');
+  const clientCookies = new Cookies(req, res);
   let refreshToken;
   if (req.body.refreshToken) {
     // eslint-disable-next-line prefer-destructuring
     refreshToken = req.body.refreshToken;
-  } else if (req.cookies.jwt) {
-    // eslint-disable-next-line prefer-destructuring
-    refreshToken = req.cookies.natoursrefreshtoken;
+  } else if (clientCookies.exist('jwt')) {
+    refreshToken = clientCookies.get('natoursrefreshtoken');
   }
 
-  if (!refreshToken) return next(new AppError('JWT expired', 403));
+  if (!refreshToken)
+    return next(new AppError('JWT expired, Please log in again', 403));
 
   const refreshTokenEnc = crypto
     .createHash('sha256')
@@ -92,10 +57,16 @@ const refreshJWTToken = async (req, res, next) => {
 
   if (!user) return next(new AppError('Invalid refresh token'));
   const jwtToken = signToken({ id: user.id }, process.env.JWT_EXPIRES_IN);
-  createSendToken(jwtToken, res, 'jwt', process.env.REFRESHTOKEN_EXPIRES_IN);
+  clientCookies.push(
+    jwtToken,
+    'jwt',
+    process.env.REFRESHTOKEN_COOKIE_EXPIRES_IN
+  );
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
+  const clientCookies = new Cookies(req, res);
+
   const newUser = await User.create({
     name: req.body.name,
     email: req.body.email,
@@ -107,7 +78,6 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   // 1) Generate the random email token
   const emailToken = newUser.createConfirmEmailToken();
-  // I'm not validating on save
   await newUser.save({
     validateBeforeSave: false,
   });
@@ -122,7 +92,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     process.env.NOCONFIRMATIONEMAIL_EXPIRES_IN
   );
 
-  createSendToken(token, res, 'natoursnoemail', 24);
+  clientCookies.push(token, 'natoursnoemail', 24);
 
   res.status(200).json({
     status: 'success',
@@ -131,6 +101,8 @@ exports.signup = catchAsync(async (req, res, next) => {
 });
 
 exports.confirmEmail = catchAsync(async (req, res, next) => {
+  const clientCookies = new Cookies(req, res);
+
   // 1) Get user based on the token
   const hashedToken = crypto
     .createHash('sha256')
@@ -147,6 +119,7 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
   user.confirmEmailToken = undefined;
   user.emailTokenExpires = undefined;
   user.emailConfirmedAt = Date.now();
+  user.refreshToken = undefined;
   const refreshToken = user.createRefreshToken();
   await user.save({ validateBeforeSave: false });
 
@@ -154,14 +127,10 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
   await new Email(user, url).sendWelcome();
 
   // Send refreshtoken as a cookie
-  createSendToken(refreshToken, res, 'natoursrefreshtoken', 24);
   const token = signToken({ id: user._id }, process.env.JWT_EXPIRES_IN);
-
-  createSendToken(token, res, 'jwt');
-
-  removeToken(res, 'natoursnoemail');
-
-  user.refreshToken = undefined;
+  clientCookies.push(refreshToken, 'natoursrefreshtoken', 24);
+  clientCookies.push(token, 'jwt');
+  clientCookies.pull('natoursnoemail');
 
   res.status(201).json({
     status: 'success',
@@ -194,6 +163,8 @@ exports.resendConfirmationEmail = catchAsync(async (req, res, next) => {
 });
 
 exports.login = catchAsync(async (req, res, next) => {
+  const clientCookies = new Cookies(req, res);
+
   const { email, password } = req.body;
 
   // 1) Check if email and password exists
@@ -205,7 +176,6 @@ exports.login = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email }).select('+password');
 
   // correctPassword is an instance method, see: userModel.js
-
   if (!user || !(await user.correctPassword(password, user.password))) {
     // Be vague on description -> email or password
     return next(new AppError('Incorrect email or password'), 401);
@@ -220,22 +190,21 @@ exports.login = catchAsync(async (req, res, next) => {
       process.env.NOCONFIRMATIONEMAIL_EXPIRES_IN
     );
 
-    createSendToken(token, res, 'natoursnoemail', 24);
+    clientCookies.push(token, 'natoursnoemail');
 
     return next(new AppError('Please confirm your email before login!', 403));
   }
 
   // 3) If everything ok, send token to client
-  // But before remove the curse!
-  removeToken(res, 'natoursnoemail');
+  clientCookies.pull('natoursnoemail');
 
   // Send refreshtoken as a cookie
   const refreshToken = user.createRefreshToken();
   await user.save({ validateBeforeSave: false });
-  createSendToken(refreshToken, res, 'natoursrefreshtoken', 24);
   const token = signToken({ id: user._id }, process.env.JWT_EXPIRES_IN);
 
-  createSendToken(token, res, 'jwt');
+  clientCookies.push(refreshToken, 'natoursrefreshtoken', 24);
+  clientCookies.push(token, 'jwt');
 
   // Remove password from output
   user.password = undefined;
@@ -273,7 +242,6 @@ exports.restrictToNoEmailConfirmed = catchAsync(async (req, res, next) => {
 
   // 2) Verification token
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-  // console.log(decoded);
 
   // 3) Check if user still exists
   const currentUser = await User.findOne({ email: decoded.email });
@@ -290,7 +258,6 @@ exports.restrictToNoEmailConfirmed = catchAsync(async (req, res, next) => {
 });
 
 exports.restrictForPurchased = catchAsync(async (req, res, next) => {
-  // Tour exists?
   const bookings = await Booking.find({ user: req.user.id });
   const tour = await Tour.findById(req.body.tour);
   const isTourPurchased = bookings.find(
@@ -302,6 +269,8 @@ exports.restrictForPurchased = catchAsync(async (req, res, next) => {
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
+  const clientCookies = new Cookies(req, res);
+
   // 1) Getting token and check if it's there
   let token;
   if (
@@ -323,7 +292,6 @@ exports.protect = catchAsync(async (req, res, next) => {
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET, {
     ignoreExpiration: true,
   });
-  // console.log(decoded);
 
   // 3) Check if user still exists
   const currentUser = await User.findById(decoded.id);
@@ -343,32 +311,37 @@ exports.protect = catchAsync(async (req, res, next) => {
       new AppError('Use recently changed password! Please log in again.', 401)
     );
   }
-  // Grant access to protected route
-  req.user = currentUser;
-  res.locals.user = currentUser;
 
   if (
     decoded.exp < Date.now() &&
     !req.body.refreshToken &&
-    !req.cookies.natoursrefreshtoken
-  )
-    return next(new AppError('JWT expired', 403));
+    !clientCookies.exist('natoursrefreshtoken')
+  ) {
+    clientCookies.pull('jwt');
+    return next(new AppError('JWT expired, Please log in again', 403));
+  }
+
+  // Grant access to protected route
+  req.user = currentUser;
+  res.locals.user = currentUser;
+
   if (decoded.exp < Date.now()) await refreshJWTToken(req, res, next);
   next();
 });
 
 // Only for rendered pages, no errors!
 exports.isLoggedIn = async (req, res, next) => {
+  const clientCookies = new Cookies(req, res);
+
   // 1) Getting token and check if it's there
   if (req.cookies.jwt) {
     try {
       // 2) Verification token
       const decoded = await promisify(jwt.verify)(
-        req.cookies.jwt,
+        clientCookies.get('jwt'),
         process.env.JWT_SECRET,
         { ignoreExpiration: true }
       );
-      // console.log(decoded);
 
       // 3) Check if user still exists
       const currentUser = await User.findById(decoded.id);
@@ -440,6 +413,8 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   });
 });
 exports.resetPassword = catchAsync(async (req, res, next) => {
+  const clientCookies = new Cookies(req, res);
+
   // 1) Get user based on the token
   const hashedToken = crypto
     .createHash('sha256')
@@ -463,19 +438,35 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   // 3) Update changedPasswordAt property for the user
   //4) Log the user in, send JWT
-  sendTokenAndResponse(user, res);
+  const token = signToken({ id: user._id }, process.env.JWT_EXPIRES_IN);
+
+  clientCookies.push(token, 'jwt');
+
+  // Remove password from output
+  user.password = undefined;
+
+  res.status(200).json({
+    status: 'success',
+    token,
+    data: {
+      user,
+    },
+  });
 });
 
 exports.logout = catchAsync(async (req, res, next) => {
+  const clientCookies = new Cookies(req, res);
   const user = await User.findById(req.user.id);
   user.refreshToken = undefined;
   user.save({ validateBeforeSave: false });
-  removeToken(res, 'jwt');
-  removeToken(res, 'natoursrefreshtoken');
+  clientCookies.pull('jwt');
+  clientCookies.pull('natoursrefreshtoken');
   res.status(200).json({ status: 'success' });
 });
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
+  const clientCookies = new Cookies(req, res);
+
   // 1) Get user from collection
   const user = await User.findById(req.user.id).select('+password');
 
@@ -490,5 +481,18 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   await user.save();
 
   // 4) Log user in, send JWT
-  sendTokenAndResponse(user, res);
+  const token = signToken({ id: user._id }, process.env.JWT_EXPIRES_IN);
+
+  clientCookies.push(token, 'jwt');
+
+  // Remove password from output
+  clientCookies.push(token, 'jwt');
+
+  res.status(200).json({
+    status: 'success',
+    token,
+    data: {
+      user,
+    },
+  });
 });
