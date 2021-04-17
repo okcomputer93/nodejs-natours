@@ -66,6 +66,35 @@ const sendConfirmationEmail = async (user, emailUrl, next) => {
   }
 };
 
+// This point is hitting after you are sure the jwt is expired
+const refreshJWTToken = async (req, res, next) => {
+  console.log('here?');
+  let refreshToken;
+  if (req.body.refreshToken) {
+    // eslint-disable-next-line prefer-destructuring
+    refreshToken = req.body.refreshToken;
+  } else if (req.cookies.jwt) {
+    // eslint-disable-next-line prefer-destructuring
+    refreshToken = req.cookies.natoursrefreshtoken;
+  }
+
+  if (!refreshToken) return next(new AppError('JWT expired', 403));
+
+  const refreshTokenEnc = crypto
+    .createHash('sha256')
+    .update(refreshToken)
+    .digest('hex');
+
+  const user = await User.findOne({
+    _id: req.user.id,
+    refreshToken: refreshTokenEnc,
+  });
+
+  if (!user) return next(new AppError('Invalid refresh token'));
+  const jwtToken = signToken({ id: user.id }, process.env.JWT_EXPIRES_IN);
+  createSendToken(jwtToken, res, 'jwt', process.env.REFRESHTOKEN_EXPIRES_IN);
+};
+
 exports.signup = catchAsync(async (req, res, next) => {
   const newUser = await User.create({
     name: req.body.name,
@@ -118,22 +147,25 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
   user.confirmEmailToken = undefined;
   user.emailTokenExpires = undefined;
   user.emailConfirmedAt = Date.now();
-  user.save({ validateBeforeSave: false });
-
-  removeToken(res, 'natoursnoemail');
+  const refreshToken = user.createRefreshToken();
+  await user.save({ validateBeforeSave: false });
 
   const url = `${req.protocol}://${req.get('host')}/me`;
   await new Email(user, url).sendWelcome();
 
-  const token = signToken({ id: user._id });
+  // Send refreshtoken as a cookie
+  createSendToken(refreshToken, res, 'natoursrefreshtoken', 24);
+  const token = signToken({ id: user._id }, process.env.JWT_EXPIRES_IN);
 
   createSendToken(token, res, 'jwt');
 
-  // Remove password from output
-  user.password = undefined;
+  removeToken(res, 'natoursnoemail');
+
+  user.refreshToken = undefined;
 
   res.status(201).json({
     status: 'success',
+    refreshToken,
     token,
     data: {
       user,
@@ -197,7 +229,26 @@ exports.login = catchAsync(async (req, res, next) => {
   // But before remove the curse!
   removeToken(res, 'natoursnoemail');
 
-  sendTokenAndResponse(user, res);
+  // Send refreshtoken as a cookie
+  const refreshToken = user.createRefreshToken();
+  await user.save({ validateBeforeSave: false });
+  createSendToken(refreshToken, res, 'natoursrefreshtoken', 24);
+  const token = signToken({ id: user._id }, process.env.JWT_EXPIRES_IN);
+
+  createSendToken(token, res, 'jwt');
+
+  // Remove password from output
+  user.password = undefined;
+  user.refreshToken = undefined;
+
+  res.status(200).json({
+    status: 'success',
+    refreshToken,
+    token,
+    data: {
+      user,
+    },
+  });
 });
 
 exports.restrictToNoEmailConfirmed = catchAsync(async (req, res, next) => {
@@ -269,7 +320,9 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   // 2) Verification token
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET, {
+    ignoreExpiration: true,
+  });
   // console.log(decoded);
 
   // 3) Check if user still exists
@@ -290,10 +343,17 @@ exports.protect = catchAsync(async (req, res, next) => {
       new AppError('Use recently changed password! Please log in again.', 401)
     );
   }
-
   // Grant access to protected route
   req.user = currentUser;
   res.locals.user = currentUser;
+
+  if (
+    decoded.exp < Date.now() &&
+    !req.body.refreshToken &&
+    !req.cookies.natoursrefreshtoken
+  )
+    return next(new AppError('JWT expired', 403));
+  if (decoded.exp < Date.now()) await refreshJWTToken(req, res, next);
   next();
 });
 
@@ -305,7 +365,8 @@ exports.isLoggedIn = async (req, res, next) => {
       // 2) Verification token
       const decoded = await promisify(jwt.verify)(
         req.cookies.jwt,
-        process.env.JWT_SECRET
+        process.env.JWT_SECRET,
+        { ignoreExpiration: true }
       );
       // console.log(decoded);
 
@@ -405,10 +466,14 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   sendTokenAndResponse(user, res);
 });
 
-exports.logout = (req, res) => {
+exports.logout = catchAsync(async (req, res, next) => {
+  const user = await User.findById(req.user.id);
+  user.refreshToken = undefined;
+  user.save({ validateBeforeSave: false });
   removeToken(res, 'jwt');
+  removeToken(res, 'natoursrefreshtoken');
   res.status(200).json({ status: 'success' });
-};
+});
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
   // 1) Get user from collection
