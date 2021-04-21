@@ -6,7 +6,7 @@ import { openDateModal } from './modal';
 
 // DOM ELEMENTS
 const mapBox = document.querySelector('#map');
-const loginForm = document.querySelector('#login');
+const loginBox = document.querySelector('.login-form');
 const logoutBtn = document.querySelector('.nav__el--logout');
 const updateDataForm = document.querySelector('#update-data');
 const passwordUpdateForm = document.querySelector('#update-password');
@@ -14,6 +14,7 @@ const bookBtn = document.querySelector('#book-tour');
 const modalDate = document.querySelector('#modal-date');
 const cancelModalDate = document.querySelector('#modal-date-cancel');
 
+let loginForm = document.querySelector('#login');
 const resendEmail = document.querySelector('#resend-email');
 
 // VALUES
@@ -24,14 +25,66 @@ if (mapBox) {
   displayMap(locations);
 }
 
-if (loginForm) {
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+const loginFormEventListener = () => {
+  document.querySelector('#login').addEventListener('submit', (event) => {
+    event.preventDefault();
     const email = document.querySelector('#email').value;
     const password = document.querySelector('#password').value;
-    fetchLogin(email, password);
+    handleLogin(email, password);
   });
+};
+
+if (loginForm) {
+  loginFormEventListener();
 }
+
+const submitTokenEventListener = async (email, password) => {
+  document
+    .querySelector('#login-twofactor')
+    .addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const authToken = document.querySelector('#auth-token').value;
+      await fetchLogin(email, password, authToken);
+      document.querySelector('#btn-auth-token').blur();
+    });
+};
+
+const backEventListener = (loginTemplate) => {
+  document
+    .querySelector('#btn-auth-back')
+    .addEventListener('click', (event) => {
+      loginBox.innerHTML = '';
+      loginBox.innerHTML = loginTemplate;
+      loginFormEventListener();
+    });
+};
+//TODO: Refactor this?
+
+const handleLogin = async (email, password) => {
+  const data = await fetchLogin(email, password);
+  if (data?.requireTwoFactorAuth) {
+    const loginTemplate = loginBox.innerHTML;
+    loginBox.innerHTML = '';
+    const twoFactorTemplate = `
+        <h2 class="heading-secondary ma-bt-lg heading-form--token">Two Factor Auth is Enabled</h2>
+        <form class="form form--token" id="login-twofactor">
+          <div class="form__group">
+            <label for="auth-token" class="form__label">Authentication Code</label>
+            <input type="text" minlength="6" required autofocus id="auth-token" class="form__input">
+            <p class="cta__token">Please provide the authentication code from your app</p>
+          </div>
+          <div class="form__group group__buttons">
+              <button id="btn-auth-token" class="btn btn--green">Confirm</button>
+              <button type="button" id="btn-auth-back" class="btn btn--white btn--cancel">Back</button>
+          </div>
+        </form>
+      `;
+    loginBox.insertAdjacentHTML('afterbegin', twoFactorTemplate);
+
+    submitTokenEventListener(email, password);
+    backEventListener(loginTemplate);
+  }
+};
 
 if (logoutBtn) {
   logoutBtn.addEventListener('click', async () => {

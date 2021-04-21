@@ -29,8 +29,10 @@
     "multer": "^1.4.2",
     "nodemailer": "^6.5.0",
     "pug": "^3.0.2",
+    "qrcode": "^1.4.4",
     "sharp": "^0.28.0",
     "slugify": "^1.4.6",
+    "speakeasy": "^2.0.0",
     "stripe": "^8.141.0",
     "validator": "^13.5.2",
     "xss-clean": "^0.1.1"

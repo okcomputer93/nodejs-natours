@@ -10,6 +10,8 @@ const AppError = require('../utils/appError');
 const Email = require('../utils/email');
 const Cookies = require('../utils/cookiesHandler');
 
+const twoFactorService = require('./services/twoFactorService');
+
 const signToken = (name, expiresIn) =>
   jwt.sign(name, process.env.JWT_SECRET, {
     expiresIn,
@@ -163,9 +165,7 @@ exports.resendConfirmationEmail = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.login = catchAsync(async (req, res, next) => {
-  const clientCookies = new Cookies(req, res);
-
+exports.verify = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
   // 1) Check if email and password exists
@@ -175,12 +175,49 @@ exports.login = catchAsync(async (req, res, next) => {
 
   // 2) Check if user exists && password is correct
   const user = await User.findOne({ email }).select('+password');
+  req.userId = user.id;
 
   // correctPassword is an instance method, see: userModel.js
   if (!user || !(await user.correctPassword(password, user.password))) {
     // Be vague on description -> email or password
     return next(new AppError('Incorrect email or password'), 401);
   }
+
+  if (!user.twoFactorAuthenticationCode) {
+    return next();
+  }
+
+  if (req.body.authToken) {
+    const { authToken } = req.body;
+    // const timeToken = twoFactorService.getTimeBasedToken(authToken);
+    console.log(authToken);
+    if (
+      !twoFactorService.verifyTwoFactorAuthenticationCode(
+        authToken,
+        user.twoFactorAuthenticationCode
+      )
+    ) {
+      return next(new AppError('Wrong authentication code', 401));
+    }
+    return next();
+  }
+
+  //TODO: Implement in front end every case for status code
+  //! Remember: If 2FA is required, remove all content in form, and add authToken element
+  //! The route is still the same <- is smart enough
+  res.status(201).json({
+    status: 'success',
+    data: {
+      requireTwoFactorAuth: true,
+      message:
+        "Two factor auth is activated, please provide the code from your app in your body with the field 'authToken'",
+    },
+  });
+});
+
+exports.login = catchAsync(async (req, res, next) => {
+  const clientCookies = new Cookies(req, res);
+  const user = await User.findById(req.userId);
 
   // User has confirmed its email?
   if (!user.emailConfirmedAt) {
@@ -210,6 +247,7 @@ exports.login = catchAsync(async (req, res, next) => {
   // Remove password from output
   user.password = undefined;
   user.refreshToken = undefined;
+  user.twoFactorAuthenticationCode = undefined;
 
   res.status(200).json({
     status: 'success',
@@ -497,3 +535,29 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+exports.generateTwoFactorAuthenticationQRCode = catchAsync(
+  async (req, res, next) => {
+    const user = await User.findById(req.user.id);
+
+    const {
+      otpauthUrl,
+      base32,
+    } = twoFactorService.getTwoFactorAuthenticationCode(user.email);
+    user.twoFactorAuthenticationCode = base32;
+    await user.save({ validateBeforeSave: false });
+    twoFactorService.respondWithQRCode(otpauthUrl, res);
+  }
+);
+
+// I'll need the user in request (req)
+exports.verifyTwoFactorAuthenticationQRCode = (req, res, next) => {
+  if (
+    !twoFactorService.verifyTwoFactorAuthenticationCode(
+      req.body.authCode,
+      req.user.twoFactorAuthenticationCode
+    )
+  ) {
+    return next(new AppError('Wrong authentication code', 403));
+  }
+};

@@ -54,6 +54,7 @@ const userSchema = new mongoose.Schema({
   emailTokenExpires: Date,
   emailConfirmedAt: Date,
   refreshToken: String,
+  twoFactorAuthenticationCode: String,
   active: {
     type: Boolean,
     default: true,

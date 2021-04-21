@@ -5,10 +5,13 @@ const bookingRoutes = require('./bookingRoutes');
 
 const router = express.Router();
 
+// 2F Authentication
+// router.post('/2fa/verify', authController.verifyTwoFactorAuthenticationQRCode);
+
 router.use('/:id/bookings', bookingRoutes);
 
 router.post('/signup', authController.signup);
-router.post('/login', authController.login);
+router.post('/login', authController.verify, authController.login);
 router.get('/logout', authController.protect, authController.logout);
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
@@ -21,6 +24,12 @@ router.post(
 
 // Protect all routes after this middleware
 router.use(authController.protect);
+
+// 2F Authentication
+router.get(
+  '/2fa/generate',
+  authController.generateTwoFactorAuthenticationQRCode
+);
 
 router.patch('/updateMyPassword', authController.updatePassword);
 router.get('/me', userController.getMe, userController.getUser);

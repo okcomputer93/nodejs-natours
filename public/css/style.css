@@ -765,6 +765,10 @@ body {
   font-size: 1.9rem;
   font-weight: 400;
 }
+.cta__token {
+  font-size: 1.5rem;
+  font-weight: 400;
+}
 
 .user-view {
   background-color: #fff;
@@ -1240,6 +1244,7 @@ body {
   box-shadow: 0 2.5rem 8rem 2rem rgba(0, 0, 0, 0.06);
   padding: 5rem 7rem;
   border-radius: 5px;
+  transition: all 0.4s ease-out;
 }
 
 .form__input {
@@ -1271,6 +1276,17 @@ body {
 }
 .form__input::-webkit-input-placeholder {
   color: #bbb;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type='number'] {
+  -moz-appearance: textfield;
 }
 
 .form__group:not(:last-child) {
@@ -1332,6 +1348,22 @@ body {
   box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);
   -webkit-transform: translateY(-2px);
   transform: translateY(-2px);
+}
+
+.form--token {
+  text-align: center;
+}
+
+.heading-form--token {
+  display: block !important;
+  text-align: center;
+}
+
+.group__buttons {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .modal {
@@ -1449,10 +1481,6 @@ body {
 
 .modal__buttons {
   margin-top: 5rem;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
 /* Select element */

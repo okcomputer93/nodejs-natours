@@ -62,7 +62,7 @@ export const fetchRequest = async ({
   }
 };
 
-export const fetchLogin = async (email, password) => {
+export const fetchLogin = async (email, password, authToken) => {
   try {
     const response = await ajax({
       url: 'users/login',
@@ -71,6 +71,7 @@ export const fetchLogin = async (email, password) => {
       body: JSON.stringify({
         email,
         password,
+        authToken,
       }),
     });
 
@@ -84,6 +85,10 @@ export const fetchLogin = async (email, password) => {
 
     if (!response.ok) {
       throw Error(data.message);
+    }
+
+    if (data.data.requireTwoFactorAuth) {
+      return { requireTwoFactorAuth: true };
     }
 
     if (data.status === 'success') {
