@@ -7,6 +7,16 @@ mixin navItem(link, text, icon, isActive = false)
         use(xlink:href=`img/icons.svg#icon-${icon}`)
       | #{text}
 
+mixin twoFactorSection(heading, button, description = "When two factor authentication is enabled, you will be prompted for a secure, random token during authentication. You may retrieve this token from your phone's Google Authenticator application")
+  h3.heading-profile#two-factor-desc #{heading}
+  p.paragraph-profile #{description}
+  if user.isTwoFactorEnabled
+    .form__group.right
+      button.btn.btn--small.btn--white.btn--cancel#btn-twofactor(data-is-active=`${user.isTwoFactorEnabled}`) #{button}
+  else 
+    .form__group.right
+      button.btn.btn--small.btn--green#btn-twofactor(data-is-active=`${user.isTwoFactorEnabled}`) #{button}
+
 block content 
   main.main
     .user-view
@@ -45,6 +55,13 @@ block content
               button.btn.btn--small.btn--green(type="submit") Save settings
         .line &nbsp;
         .user-view__form-container
+          h2.heading-secondary.ma-bt-md Two Factor Authentication
+          if user.isTwoFactorEnabled 
+            +twoFactorSection('You have enabled two factor authentication.', 'Disable')
+          else 
+            +twoFactorSection('You have not enabled two factor authentication.', 'Enable')
+        .line &nbsp;
+        .user-view__form-container
           h2.heading-secondary.ma-bt-md Password change
           form.form.form-user-settings#update-password
             .form__group
@@ -58,3 +75,15 @@ block content
               input#password-confirm.form__input(type='password', placeholder='••••••••', required, minlength='8')
             .form__group.right
               button.btn.btn--small.btn--green.btn--save-password Save password
+    .modal#modal-password
+      .modal__box.modal__box--small
+        .modal__content
+          //- form.form#form-password
+          //-   h2.heading-secondary.ma-bt-lg.heading-form Password Required
+          //-   .form__group.ma-bt-md
+          //-     label.form__label(for='password') Password
+          //-     input#password.form__input(type='password', placeholder='••••••••', required, minlength='8')
+          //-     p.cta__form In order to execute this action, we'll need your password
+          //-   .form__group
+          //-     button.btn.btn--green Continue
+          span.modal__close--small &times;

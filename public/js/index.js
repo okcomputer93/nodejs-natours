@@ -3,6 +3,7 @@ import { displayMap } from './mapbox';
 import { fetchRequest } from './utils/fetchRequest';
 import { fetchLogin } from './utils/fetchRequest';
 import { openDateModal } from './modal';
+import { openPasswordModal } from './modal';
 
 // DOM ELEMENTS
 const mapBox = document.querySelector('#map');
@@ -13,6 +14,8 @@ const passwordUpdateForm = document.querySelector('#update-password');
 const bookBtn = document.querySelector('#book-tour');
 const modalDate = document.querySelector('#modal-date');
 const cancelModalDate = document.querySelector('#modal-date-cancel');
+
+const twoFactorBtn = document.querySelector('#btn-twofactor');
 
 let loginForm = document.querySelector('#login');
 const resendEmail = document.querySelector('#resend-email');
@@ -58,7 +61,6 @@ const backEventListener = (loginTemplate) => {
       loginFormEventListener();
     });
 };
-//TODO: Refactor this?
 
 const handleLogin = async (email, password) => {
   const data = await fetchLogin(email, password);
@@ -66,16 +68,16 @@ const handleLogin = async (email, password) => {
     const loginTemplate = loginBox.innerHTML;
     loginBox.innerHTML = '';
     const twoFactorTemplate = `
-        <h2 class="heading-secondary ma-bt-lg heading-form--token">Two Factor Auth is Enabled</h2>
+        <h2 class="heading-secondary ma-bt-lg heading-form">Two Factor Auth is Enabled</h2>
         <form class="form form--token" id="login-twofactor">
           <div class="form__group">
             <label for="auth-token" class="form__label">Authentication Code</label>
             <input type="text" minlength="6" required autofocus id="auth-token" class="form__input">
-            <p class="cta__token">Please provide the authentication code from your app</p>
+            <p class="cta__form">Please provide the authentication code from your app</p>
           </div>
           <div class="form__group group__buttons">
               <button id="btn-auth-token" class="btn btn--green">Confirm</button>
-              <button type="button" id="btn-auth-back" class="btn btn--white btn--cancel">Back</button>
+              <button type="button" id="btn-auth-back" class="btn d">Back</button>
           </div>
         </form>
       `;
@@ -85,6 +87,13 @@ const handleLogin = async (email, password) => {
     backEventListener(loginTemplate);
   }
 };
+
+if (twoFactorBtn) {
+  twoFactorBtn.addEventListener('click', function (event) {
+    this.disabled = true;
+    openPasswordModal();
+  });
+}
 
 if (logoutBtn) {
   logoutBtn.addEventListener('click', async () => {

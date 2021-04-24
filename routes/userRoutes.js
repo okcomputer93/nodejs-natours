@@ -26,9 +26,16 @@ router.post(
 router.use(authController.protect);
 
 // 2F Authentication
-router.get(
+router.post(
   '/2fa/generate',
+  authController.passwordIsNeeded,
   authController.generateTwoFactorAuthenticationQRCode
+);
+
+router.post(
+  '/2fa/disable',
+  authController.passwordIsNeeded,
+  authController.DisableTwoFactorAuthenticationQRCode
 );
 
 router.patch('/updateMyPassword', authController.updatePassword);

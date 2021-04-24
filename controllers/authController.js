@@ -333,7 +333,9 @@ exports.protect = catchAsync(async (req, res, next) => {
   });
 
   // 3) Check if user still exists
-  const currentUser = await User.findById(decoded.id);
+  const currentUser = await User.findById(decoded.id).select(
+    '+twoFactorAuthenticationCode'
+  );
   if (!currentUser) {
     return next(
       new AppError(
@@ -363,6 +365,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   // Grant access to protected route
   req.user = currentUser;
   res.locals.user = currentUser;
+  res.locals.user.isTwoFactorEnabled = !!currentUser.twoFactorAuthenticationCode;
 
   if (decoded.exp < Date.now()) await refreshJWTToken(req, res, next);
   next();
@@ -550,14 +553,31 @@ exports.generateTwoFactorAuthenticationQRCode = catchAsync(
   }
 );
 
-// I'll need the user in request (req)
-exports.verifyTwoFactorAuthenticationQRCode = (req, res, next) => {
-  if (
-    !twoFactorService.verifyTwoFactorAuthenticationCode(
-      req.body.authCode,
-      req.user.twoFactorAuthenticationCode
-    )
-  ) {
-    return next(new AppError('Wrong authentication code', 403));
+exports.DisableTwoFactorAuthenticationQRCode = catchAsync(
+  async (req, res, next) => {
+    const user = await User.findById(req.user.id);
+    user.twoFactorAuthenticationCode = undefined;
+    await user.save({ validateBeforeSave: false });
+    res.status(200).json({
+      status: 'success',
+      data: {
+        message: 'Two factor authentication is disabled.',
+      },
+    });
   }
-};
+);
+
+exports.passwordIsNeeded = catchAsync(async (req, res, next) => {
+  const user = await User.findById(req.user.id).select('+password');
+
+  if (!req.body.password)
+    return next(new AppError('Please provide a password', 403));
+
+  if (
+    !user ||
+    !(await user.correctPassword(req.body.password, user.password))
+  ) {
+    return next(new AppError('Incorrect password'), 403);
+  }
+  return next();
+});

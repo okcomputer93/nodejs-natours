@@ -765,7 +765,7 @@ body {
   font-size: 1.9rem;
   font-weight: 400;
 }
-.cta__token {
+.cta__form {
   font-size: 1.5rem;
   font-weight: 400;
 }
@@ -1354,7 +1354,7 @@ input[type='number'] {
   text-align: center;
 }
 
-.heading-form--token {
+.heading-form {
   display: block !important;
   text-align: center;
 }
@@ -1387,6 +1387,11 @@ input[type='number'] {
   overflow: hidden;
 }
 
+.modal__box--small {
+  width: 40%;
+  height: 30rem;
+}
+
 .modal__background {
   width: 53%;
   height: 250%;
@@ -1412,6 +1417,18 @@ input[type='number'] {
   position: relative;
   top: 0;
   right: 3%;
+  color: #aaa;
+  font-size: 28px;
+  font-weight: bold;
+  transition: 0.5s transform;
+}
+
+.modal__close--small {
+  align-self: flex-start;
+  display: inline-block;
+  position: absolute;
+  top: -8%;
+  right: 5%;
   color: #aaa;
   font-size: 28px;
   font-weight: bold;
@@ -1528,4 +1545,22 @@ input[type='number'] {
 
 .select__option:hover {
   color: white;
+}
+
+.heading-profile {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.paragraph-profile {
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin-bottom: 1.5rem;
+}
+
+.paragraph-profile--bold {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
 }

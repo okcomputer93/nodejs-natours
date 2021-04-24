@@ -102,3 +102,51 @@ export const fetchLogin = async (email, password, authToken) => {
     showAlert('error', error);
   }
 };
+
+export const fetchAndStream = async (password) => {
+  try {
+    const response = await ajax({
+      url: 'users/2fa/generate',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        password,
+      }),
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      throw Error(data.message);
+    }
+    if (response.body instanceof ReadableStream) {
+      const reader = response.body.getReader();
+      const stream = new ReadableStream({
+        async start(controller) {
+          async function push() {
+            try {
+              const { done, value } = await reader.read();
+              if (done) {
+                // console.log('done', done);
+                controller.close();
+                return;
+              }
+              controller.enqueue(value);
+              // console.log(done, value);
+              await push();
+            } catch (error) {
+              throw error;
+            }
+          }
+          await push();
+        },
+      });
+      const result = await new Response(stream, {
+        headers: { 'Content-Type': 'text/html' },
+      }).blob();
+      showAlert('success', 'Two factor authentication is enabled');
+      return result;
+    }
+  } catch (error) {
+    console.error(error);
+    showAlert('error', error);
+  }
+};
