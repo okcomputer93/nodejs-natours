@@ -103,6 +103,35 @@ export const fetchLogin = async (email, password, authToken) => {
   }
 };
 
+export const fetchSignUp = async (name, email, password, passwordConfirm) => {
+  try {
+    const response = await ajax({
+      url: 'users/signup',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        passwordConfirm,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw Error(data.message);
+    }
+    showAlert('success', 'Please confirm your email');
+    setTimeout(() => {
+      location.assign('/confirmYourEmail');
+    }, 1500);
+  } catch (error) {
+    console.error(error);
+    showAlert('error', error);
+  }
+};
+
 export const fetchAndStream = async (password) => {
   try {
     const response = await ajax({

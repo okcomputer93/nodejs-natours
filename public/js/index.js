@@ -2,6 +2,7 @@ import '@babel/polyfill';
 import { displayMap } from './mapbox';
 import { fetchRequest } from './utils/fetchRequest';
 import { fetchLogin } from './utils/fetchRequest';
+import { fetchSignUp } from './utils/fetchRequest';
 import { openDateModal } from './modal';
 import { openPasswordModal } from './modal';
 
@@ -19,6 +20,8 @@ const twoFactorBtn = document.querySelector('#btn-twofactor');
 
 let loginForm = document.querySelector('#login');
 const resendEmail = document.querySelector('#resend-email');
+
+const signUpForm = document.querySelector('#signup');
 
 // VALUES
 
@@ -180,5 +183,16 @@ if (resendEmail) {
       method: 'POST',
       messageOnSuccess: 'Email resent, check your inbox',
     });
+  });
+}
+
+if (signUpForm) {
+  signUpForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const name = document.querySelector('#name').value;
+    const email = document.querySelector('#email').value;
+    const password = document.querySelector('#password').value;
+    const passwordConfirm = document.querySelector('#password-confirm').value;
+    fetchSignUp(name, email, password, passwordConfirm);
   });
 }
