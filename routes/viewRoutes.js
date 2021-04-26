@@ -21,6 +21,11 @@ router.get(
   authController.restrictToNoEmailConfirmed,
   viewsController.getEmailConfirmationForm
 );
+router.get(
+  '/confirmationEmail/:token',
+  authController.confirmEmail,
+  viewsController.confirmEmailResponse
+);
 
 router.post(
   '/submit-user-data',

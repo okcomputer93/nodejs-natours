@@ -3,10 +3,10 @@ const nodemailer = require('nodemailer');
 const { htmlToText } = require('html-to-text');
 
 module.exports = class Email {
-  constructor(user, url) {
+  constructor(user, ...urls) {
     this.to = user.email;
     this.firstName = user.name.split(' ')[0];
-    this.url = url;
+    this.urls = urls;
     this.from = `Omar J. <${process.env.EMAIL_FROM}>`;
   }
 
@@ -37,7 +37,7 @@ module.exports = class Email {
       `${__dirname}/../views/emails/${template}.pug`,
       {
         firstName: this.firstName,
-        url: this.url,
+        urls: this.urls,
         subject,
       }
     );

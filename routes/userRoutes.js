@@ -15,7 +15,11 @@ router.post('/login', authController.verify, authController.login);
 router.get('/logout', authController.protect, authController.logout);
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
-router.get('/confirmEmail/:token', authController.confirmEmail);
+router.get(
+  '/confirmEmail/:token',
+  authController.confirmEmail,
+  authController.confirmEmailResponse
+);
 router.post(
   '/resendEmail',
   authController.restrictToNoEmailConfirmed,

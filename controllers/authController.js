@@ -17,9 +17,9 @@ const signToken = (name, expiresIn) =>
     expiresIn,
   });
 
-const sendConfirmationEmail = async (user, emailUrl, next) => {
+const sendConfirmationEmail = async (user, viewUrl, apiUrl, next) => {
   try {
-    await new Email(user, emailUrl).sendConfirmEmail();
+    await new Email(user, viewUrl, apiUrl).sendConfirmEmail();
   } catch (error) {
     user.confirmEmailToken = undefined;
     user.emailTokenExpires = undefined;
@@ -66,57 +66,8 @@ const refreshJWTToken = async (req, res, next) => {
   );
 };
 
-exports.signup = catchAsync(async (req, res, next) => {
+const emailConfirmation = async (user, req, res, next) => {
   const clientCookies = new Cookies(req, res);
-
-  const newUser = await User.create({
-    name: req.body.name,
-    email: req.body.email,
-    password: req.body.password,
-    passwordConfirm: req.body.passwordConfirm,
-    passwordChangedAt: req.body.passwordChangedAt,
-    role: req.body.role,
-  });
-
-  // 1) Generate the random email token
-  const emailToken = newUser.createConfirmEmailToken();
-  await newUser.save({
-    validateBeforeSave: false,
-  });
-  const confirmEmailUrl = `${req.protocol}://${req.get(
-    'host'
-  )}/api/v1/users/confirmEmail/${emailToken}`;
-
-  await sendConfirmationEmail(newUser, confirmEmailUrl, next);
-
-  const token = signToken(
-    { email: newUser.email },
-    process.env.NOCONFIRMATIONEMAIL_EXPIRES_IN
-  );
-
-  clientCookies.push(token, 'natoursnoemail', 24);
-
-  res.status(200).json({
-    status: 'success',
-    message: 'Confirmation sent to email!',
-  });
-});
-
-exports.confirmEmail = catchAsync(async (req, res, next) => {
-  const clientCookies = new Cookies(req, res);
-
-  // 1) Get user based on the token
-  const hashedToken = crypto
-    .createHash('sha256')
-    .update(req.params.token)
-    .digest('hex');
-
-  const user = await User.findOne({
-    confirmEmailToken: hashedToken,
-    emailTokenExpires: { $gt: Date.now() },
-  });
-
-  if (!user) return next(new AppError('Token is invalid or has expired', 400));
 
   user.confirmEmailToken = undefined;
   user.emailTokenExpires = undefined;
@@ -135,15 +86,85 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
 
   user.refreshToken = undefined;
 
-  res.status(201).json({
+  return { refreshToken, token };
+};
+
+exports.signup = catchAsync(async (req, res, next) => {
+  const clientCookies = new Cookies(req, res);
+
+  const newUser = await User.create({
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.password,
+    passwordConfirm: req.body.passwordConfirm,
+    passwordChangedAt: req.body.passwordChangedAt,
+    role: req.body.role,
+  });
+
+  // 1) Generate the random email token
+  const emailToken = newUser.createConfirmEmailToken();
+  await newUser.save({
+    validateBeforeSave: false,
+  });
+  const confirmEmailViewUrl = `${req.protocol}://${req.get(
+    'host'
+  )}/confirmationEmail/${emailToken}`;
+
+  const confirmEmailApiUrl = `${req.protocol}://${req.get(
+    'host'
+  )}/api/v1/users/confirmEmail/${emailToken}`;
+
+  await sendConfirmationEmail(
+    newUser,
+    confirmEmailViewUrl,
+    confirmEmailApiUrl,
+    next
+  );
+
+  const token = signToken(
+    { email: newUser.email },
+    process.env.NOCONFIRMATIONEMAIL_EXPIRES_IN
+  );
+
+  clientCookies.push(token, 'natoursnoemail', 24);
+
+  res.status(200).json({
     status: 'success',
-    refreshToken,
-    token,
-    data: {
-      user,
-    },
+    message: 'Confirmation sent to email!',
   });
 });
+
+exports.confirmEmail = catchAsync(async (req, res, next) => {
+  // 1) Get user based on the token
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
+
+  const user = await User.findOne({
+    confirmEmailToken: hashedToken,
+    emailTokenExpires: { $gt: Date.now() },
+  });
+
+  if (!user) return next(new AppError('Token is invalid or has expired', 400));
+
+  const { refreshToken, token } = await emailConfirmation(user, req, res, next);
+  req.refreshToken = refreshToken;
+  req.token = token;
+  req.user = user;
+  return next();
+});
+
+exports.confirmEmailResponse = (req, res, next) => {
+  res.status(201).json({
+    status: 'success',
+    refreshToken: req.refreshToken,
+    token: req.token,
+    data: {
+      user: req.user,
+    },
+  });
+};
 
 exports.resendConfirmationEmail = catchAsync(async (req, res, next) => {
   // Only in views works resendEmail, not in the API
@@ -154,10 +175,15 @@ exports.resendConfirmationEmail = catchAsync(async (req, res, next) => {
   await user.save({
     validateBeforeSave: false,
   });
-  const confirmEmailUrl = `${req.protocol}://${req.get(
+  const confirmEmailViewUrl = `${req.protocol}://${req.get(
+    'host'
+  )}/confirmationEmail/${emailToken}`;
+
+  const confirmEmailApiUrl = `${req.protocol}://${req.get(
     'host'
   )}/api/v1/users/confirmEmail/${emailToken}`;
-  sendConfirmationEmail(user, confirmEmailUrl, next);
+
+  sendConfirmationEmail(user, confirmEmailViewUrl, confirmEmailApiUrl, next);
 
   res.status(200).json({
     status: 'success',

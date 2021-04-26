@@ -1,7 +1,6 @@
 extends baseEmail
 
 block content
-
   p Hi #{firstName},
     p Welcome to the Natours Family
     p Please confirm your email.
@@ -13,7 +12,8 @@ block content
               tbody
                 tr
                   td
-                    a(href=`${url}`, target='_blank') Confirm Email
-    p If you are having trouble using the button, copy and paste this url:
-    a #{url}
-    p If you didn't forget your password, please ignore this message.
+                    a(href=`${urls[0]}`, target='_blank') Confirm Email
+    p If you are using our API, make a get request to:
+    a #{urls[1]}
+    p If you didn't use this email to sign up, 
+    p please ignore this message.

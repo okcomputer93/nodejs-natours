@@ -94,6 +94,10 @@ exports.getEmailConfirmationForm = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.confirmEmailResponse = async (req, res, next) => {
+  res.status(200).redirect('/me');
+};
+
 // Thanks for responding. I used your suggestion for a while and it worked great, then as I progressed through the course, there were still issues. I have put together a singular content security policy inside my app.js as follows:
 
 // app.use(
