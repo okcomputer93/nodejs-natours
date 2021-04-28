@@ -1,5 +1,6 @@
 import '@babel/polyfill';
 import { displayMap } from './mapbox';
+import { showAlert } from './alerts';
 import { fetchRequest } from './utils/fetchRequest';
 import { fetchLogin } from './utils/fetchRequest';
 import { fetchSignUp } from './utils/fetchRequest';
@@ -22,6 +23,11 @@ let loginForm = document.querySelector('#login');
 const resendEmail = document.querySelector('#resend-email');
 
 const signUpForm = document.querySelector('#signup');
+
+const starsRate = document.querySelector('.stars__rate');
+const selectableStars = document.querySelectorAll('.star__selectable');
+const starsContainer = document.querySelector('.stars__rate');
+const formReview = document.querySelector('#form-review');
 
 // VALUES
 
@@ -194,5 +200,52 @@ if (signUpForm) {
     const password = document.querySelector('#password').value;
     const passwordConfirm = document.querySelector('#password-confirm').value;
     fetchSignUp(name, email, password, passwordConfirm);
+  });
+}
+
+if (starsRate) {
+  starsRate.addEventListener('click', (event) => {
+    document.querySelector('.is-error')?.remove();
+
+    selectableStars.forEach((star) => star.classList.remove('star__selected'));
+    const value = event.target.closest('.star__selectable').dataset.value;
+    starsContainer.dataset.value = value;
+    const selectedStars = document.querySelectorAll(
+      `[data-value="${value}"],
+      [data-value="${value}"] ~ .star__selectable`
+    );
+    selectedStars.forEach((star) => star.classList.add('star__selected'));
+  });
+}
+
+if (formReview) {
+  formReview.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const rating = +starsContainer.dataset.value;
+    const textArea = event.target.querySelector('.stars__review');
+    const review = textArea.value;
+    const tourId = document.querySelector('#book-tour').dataset.tourId;
+    if (!rating || rating === -1) {
+      textArea.insertAdjacentHTML(
+        'afterend',
+        `
+      <p class="is-error">Please select a rating based on the stars.</p>
+    `
+      );
+      return;
+    }
+    const success = await fetchRequest({
+      body: {
+        rating,
+        review,
+      },
+      method: 'POST',
+      url: `tours/${tourId}/reviews`,
+      returnData: true,
+    });
+    if (success) {
+      showAlert('success', 'Thank you for your review');
+      setTimeout(() => location.reload(), 1500);
+    }
   });
 }

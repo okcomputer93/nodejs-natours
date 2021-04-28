@@ -1,6 +1,7 @@
 const Tour = require('../models/tourModel');
 const User = require('../models/userModel');
 const Booking = require('../models/bookingModel');
+const Review = require('../models/reviewModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
@@ -25,6 +26,22 @@ exports.getTour = catchAsync(async (req, res, next) => {
 
   if (!tour) {
     return next(new AppError('There is no tour with that name.', 404));
+  }
+
+  if (res.locals.user) {
+    const expiredTour = !!(await Booking.findOne({
+      user: res.locals.user.id,
+      tour: tour.id,
+      tourDate: { $lt: Date.now() },
+    }));
+    const isReviewed =
+      (
+        await Review.find({
+          user: res.locals.user.id,
+          tour: tour.id,
+        })
+      ).length > 0;
+    res.locals.user.isReviewable = expiredTour && !isReviewed;
   }
 
   res.status(200).render('tour', {
