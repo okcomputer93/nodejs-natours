@@ -89,6 +89,17 @@ exports.getMyTours = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getMyFavTours = catchAsync(async (req, res, next) => {
+  const favToursId = (await User.findById(req.user.id)).favTours;
+
+  const favTours = await Tour.find({ _id: { $in: favToursId } });
+
+  res.status(200).render('overview', {
+    title: 'Tours I love',
+    tours: favTours,
+  });
+});
+
 exports.updateUserData = catchAsync(async (req, res, next) => {
   await User.findByIdAndUpdate(
     req.user.id,

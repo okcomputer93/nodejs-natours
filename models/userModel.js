@@ -47,6 +47,7 @@ const userSchema = new mongoose.Schema({
       message: "Passwords don't match",
     },
   },
+  favTours: [{ type: mongoose.Schema.ObjectId, ref: 'Tour' }],
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,

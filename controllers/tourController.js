@@ -1,6 +1,7 @@
 const multer = require('multer');
 const sharp = require('sharp');
 const Tour = require('../models/tourModel');
+const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const factory = require('./handlerFactory');
 const AppError = require('../utils/appError');
@@ -63,6 +64,23 @@ exports.aliasTopTours = (req, res, next) => {
   req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
   next();
 };
+
+exports.toggleFavTour = catchAsync(async (req, res, next) => {
+  const tour = await Tour.findById(req.body.tourId);
+  if (!tour) return next(new AppError('Please provide a valid tour id', 400));
+  const likedTours = (await User.findById(req.user.id)).favTours;
+  const liked = likedTours.includes(tour.id);
+  const toggleLike = liked ? '$pull' : '$addToSet';
+  await User.findByIdAndUpdate(req.user.id, {
+    [toggleLike]: { favTours: tour.id },
+  });
+  res.status(200).json({
+    status: 'sucess',
+    data: {
+      isFav: !liked,
+    },
+  });
+});
 
 exports.getAllTours = factory.getAll(Tour);
 

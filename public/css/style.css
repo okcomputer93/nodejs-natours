@@ -1118,6 +1118,7 @@ body {
   -webkit-clip-path: polygon(0 0, 100% 0%, 100% 83%, 0% 98%);
   clip-path: polygon(0 0, 100% 0%, 100% 83%, 0% 98%);
   height: 22rem;
+  position: relative;
 }
 .card__picture-overlay {
   position: absolute;
@@ -1635,4 +1636,32 @@ input[type='number'] {
   color: red;
   font-size: 1.5rem;
   margin-top: 2rem;
+}
+
+.like-button {
+  height: 2rem;
+  width: 2rem;
+  position: absolute;
+  left: 2%;
+  top: 2%;
+  fill: white;
+  cursor: pointer;
+}
+
+.center-all {
+  text-align: center;
+}
+
+.like-action {
+  animation: disappear 0.4s;
+}
+
+@keyframes disappear {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(2);
+  }
 }

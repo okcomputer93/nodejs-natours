@@ -17,6 +17,11 @@ router.get('/signUp', viewsController.getSignUpForm);
 router.get('/me', authController.protect, viewsController.getAccount);
 router.get('/my-tours', authController.protect, viewsController.getMyTours);
 router.get(
+  '/my-favtours',
+  authController.protect,
+  viewsController.getMyFavTours
+);
+router.get(
   '/confirmYourEmail',
   authController.restrictToNoEmailConfirmed,
   viewsController.getEmailConfirmationForm

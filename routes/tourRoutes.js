@@ -55,4 +55,6 @@ router
     tourController.deleteTour
   );
 
+router.post('/favTour', authController.protect, tourController.toggleFavTour);
+
 module.exports = router;

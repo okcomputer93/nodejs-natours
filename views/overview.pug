@@ -2,7 +2,9 @@ extends base
 
 block content 
   main.main
-      .card-container
-        each tour in tours
-          include _card
-                  
+    if tours.length <= 0
+      .center-all
+        h2.heading-secondary Such empty...
+    .card-container
+      each tour in tours
+        include _card

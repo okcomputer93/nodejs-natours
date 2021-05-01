@@ -228,9 +228,6 @@ exports.verify = catchAsync(async (req, res, next) => {
     return next();
   }
 
-  //TODO: Implement in front end every case for status code
-  //! Remember: If 2FA is required, remove all content in form, and add authToken element
-  //! The route is still the same <- is smart enough
   res.status(201).json({
     status: 'success',
     data: {

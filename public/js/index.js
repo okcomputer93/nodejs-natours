@@ -29,6 +29,8 @@ const selectableStars = document.querySelectorAll('.star__selectable');
 const starsContainer = document.querySelector('.stars__rate');
 const formReview = document.querySelector('#form-review');
 
+const cardContainer = document.querySelector('.card-container');
+
 // VALUES
 
 // DELEGATION
@@ -247,5 +249,47 @@ if (formReview) {
       showAlert('success', 'Thank you for your review');
       setTimeout(() => location.reload(), 1500);
     }
+  });
+}
+
+if (cardContainer) {
+  cardContainer.addEventListener('click', async (event) => {
+    if (!event.target.closest('.like-group')) return;
+    const heartIcon = event.target.closest('.like-button');
+    const tourId = heartIcon.dataset.tourId;
+    if (heartIcon.dataset.isFav === 'true') {
+      heartIcon.classList.remove('like-action');
+      heartIcon.firstElementChild.setAttribute(
+        'href',
+        '/img/icons.svg#icon-heart'
+      );
+      heartIcon.dataset.isFav = 'false';
+    } else {
+      heartIcon.classList.add('like-action');
+      heartIcon.firstElementChild.setAttribute(
+        'href',
+        '/img/icons.svg#icon-filled-heart'
+      );
+      heartIcon.dataset.isFav = 'true';
+    }
+
+    const response = await fetchRequest({
+      url: 'tours/favTour',
+      body: { tourId },
+      returnData: true,
+      method: 'POST',
+    });
+    // if (response) {
+    //   if (response.data.isFav)
+    //     heartIcon.firstElementChild.setAttribute(
+    //       'href',
+    //       '/img/icons.svg#icon-filled-heart'
+    //     );
+    //   else
+    //     heartIcon.firstElementChild.setAttribute(
+    //       'href',
+    //       '/img/icons.svg#icon-heart'
+    //     );
+    // }
   });
 }
