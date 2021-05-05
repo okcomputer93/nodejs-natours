@@ -8,6 +8,7 @@
     "start:prod": "NODE_ENV=production nodemon server.js",
     "debug": "ndb server.js",
     "watch:js": "parcel watch --no-hmr ./public/js/index.js  --out-dir ./public/js --out-file bundle.js --public-url ./",
+    "watch:vue": "parcel watch --no-hmr ./public/js/src/main.js  --out-dir ./public/js --out-file app.js --public-url ./",
     "build:js": "parcel watch --no-hmr ./public/js/index.js  --out-dir ./public/js --out-file bundle.js --public-url ./"
   },
   "author": "okcomputer",
@@ -35,9 +36,11 @@
     "speakeasy": "^2.0.0",
     "stripe": "^8.141.0",
     "validator": "^13.5.2",
+    "vue": "^2.6.12",
     "xss-clean": "^0.1.1"
   },
   "devDependencies": {
+    "@vue/component-compiler-utils": "^3.2.0",
     "eslint": "^7.19.0",
     "eslint-config-airbnb": "^18.2.1",
     "eslint-config-prettier": "^7.2.0",
@@ -47,7 +50,8 @@
     "eslint-plugin-prettier": "^3.3.1",
     "eslint-plugin-react": "^7.22.0",
     "parcel-bundler": "^1.12.5",
-    "prettier": "^2.2.1"
+    "prettier": "^2.2.1",
+    "vue-template-compiler": "^2.6.12"
   },
   "engines": {
     "node": ">=10.0.0"

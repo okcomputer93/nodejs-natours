@@ -2,16 +2,17 @@
     .card__header
         .card__picture
             .card__picture-overlay &nbsp;
-            if user.favTours
-                - const isLiked = user.favTours.includes(tour.id);
-                if (isLiked)
-                    .like-group
-                        svg.like-button(data-tour-id=`${tour.id}`,data-is-fav="true")
-                            use(xlink:href="/img/icons.svg#icon-filled-heart")
-                else 
-                    .like-group
-                        svg.like-button(data-tour-id=`${tour.id}`,data-is-fav="false")
-                            use(xlink:href="/img/icons.svg#icon-heart")
+            if user
+                if user.favTours
+                    - const isLiked = user.favTours.includes(tour.id);
+                    if (isLiked)
+                        .like-group
+                            svg.like-button(data-tour-id=`${tour.id}`,data-is-fav="true")
+                                use(xlink:href="/img/icons.svg#icon-filled-heart")
+                    else 
+                        .like-group
+                            svg.like-button(data-tour-id=`${tour.id}`,data-is-fav="false")
+                                use(xlink:href="/img/icons.svg#icon-heart")
             img.card__picture-img(src=`/img/tours/${tour.imageCover}` alt=`${tour.name}`)
         h3.heading-tertirary
             span= tour.name

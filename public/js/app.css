@@ -1,0 +1,201 @@
+.review[data-v-1f3574] {
+  width: 60%;
+  background-color: #fff;
+  padding: 5rem 5rem 3rem;
+  transform: skewX(-15deg);
+  border-top-left-radius: 10rem;
+  border-bottom-right-radius: 10rem;
+  transition: 0.4s all ease-in;
+  position: relative;
+}
+.review > *[data-v-1f3574] {
+  transform: skewX(15deg);
+}
+.review__tour[data-v-1f3574] {
+  padding-bottom: 1rem;
+  text-decoration: none;
+  display: inline-block;
+}
+.review__body[data-v-1f3574] {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+.review__tour-img[data-v-1f3574] {
+  display: block;
+  width: 15rem;
+  height: 15rem;
+  border-radius: 100%;
+  flex: none;
+}
+.review__content[data-v-1f3574] {
+  border: 1px transparent solid;
+  padding: 1.5rem;
+  width: 80%;
+  font-family: 'Lato', sans-serif;
+  font-size: 1.5rem;
+  line-height: 1.6;
+  flex-grow: 1;
+  margin-left: 3rem;
+  transition: 0.4s all ease-in;
+}
+.review__message[data-v-1f3574] {
+  position: absolute;
+  font-size: 1.5rem;
+  line-height: 1.6;
+  padding: 2rem;
+}
+.review__content[data-v-1f3574]:focus {
+  outline: none;
+  border: 1px #d3d3d3 solid;
+}
+.review__btn-update[data-v-1f3574] {
+  display: flex;
+  flex-direction: row-reverse;
+  padding-top: 3rem;
+}
+.stars__rate--review[data-v-1f3574] {
+  padding: 0.5rem 0 1rem;
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  align-items: center;
+}
+.star__selectable--review[data-v-1f3574] {
+  color: #adadad;
+  width: 2.5rem;
+  height: 2.5rem;
+  cursor: pointer;
+}
+.star__selectable--review[data-v-1f3574]:hover {
+  color: #20bf6b;
+}
+.star__selected[data-v-1f3574] {
+  color: #20bf6b !important;
+}
+.star__selectable--review:hover ~ .star__selectable--review[data-v-1f3574] {
+  color: #20bf6b;
+}
+.btn--review[data-v-1f3574] {
+  font-size: 1.6rem;
+  padding: 1.4rem 3rem;
+  border-radius: 10rem;
+  text-transform: uppercase;
+  display: inline-block;
+  text-decoration: none;
+  position: relative;
+  font-weight: 400;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  /*Add later when we use this for the button in form*/
+  border: none;
+  cursor: pointer;
+}
+.is-hover[data-v-1f3574] {
+  background-color: #e2e2e2 !important;
+}
+.is-hover .review__content[data-v-1f3574] {
+  background-color: #d3d3d3 !important;
+}
+.is-error[data-v-1f3574] {
+  color: #e76b5a;
+}
+.is-success[data-v-1f3574] {
+  color: #20bf6b;
+}
+/* Loading Spinner Classes */
+
+.lds-roller {
+  display: block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-roller div {
+  animation: lds-roller 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  transform-origin: 40px 40px;
+}
+.lds-roller div:after {
+  content: ' ';
+  display: block;
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgb(168, 167, 167);
+  margin: -4px 0 0 -4px;
+}
+.lds-roller div:nth-child(1) {
+  animation-delay: -0.036s;
+}
+.lds-roller div:nth-child(1):after {
+  top: 63px;
+  left: 63px;
+}
+.lds-roller div:nth-child(2) {
+  animation-delay: -0.072s;
+}
+.lds-roller div:nth-child(2):after {
+  top: 68px;
+  left: 56px;
+}
+.lds-roller div:nth-child(3) {
+  animation-delay: -0.108s;
+}
+.lds-roller div:nth-child(3):after {
+  top: 71px;
+  left: 48px;
+}
+.lds-roller div:nth-child(4) {
+  animation-delay: -0.144s;
+}
+.lds-roller div:nth-child(4):after {
+  top: 72px;
+  left: 40px;
+}
+.lds-roller div:nth-child(5) {
+  animation-delay: -0.18s;
+}
+.lds-roller div:nth-child(5):after {
+  top: 71px;
+  left: 32px;
+}
+.lds-roller div:nth-child(6) {
+  animation-delay: -0.216s;
+}
+.lds-roller div:nth-child(6):after {
+  top: 68px;
+  left: 24px;
+}
+.lds-roller div:nth-child(7) {
+  animation-delay: -0.252s;
+}
+.lds-roller div:nth-child(7):after {
+  top: 63px;
+  left: 17px;
+}
+.lds-roller div:nth-child(8) {
+  animation-delay: -0.288s;
+}
+.lds-roller div:nth-child(8):after {
+  top: 56px;
+  left: 12px;
+}
+@keyframes lds-roller {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.reviews-list > *:not(:last-child) {
+  margin-bottom: 8rem;
+}

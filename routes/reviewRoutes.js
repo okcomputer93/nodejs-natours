@@ -17,6 +17,10 @@ router
   );
 
 router
+  .route('/my-reviews')
+  .get(authController.protect, reviewController.getMyReviews);
+
+router
   .route('/:id')
   .get(reviewController.getReview)
   .patch(

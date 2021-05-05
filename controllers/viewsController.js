@@ -100,6 +100,12 @@ exports.getMyFavTours = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getMyReviews = catchAsync(async (req, res, next) => {
+  res.status(200).render('reviews', {
+    title: 'My reviews',
+  });
+});
+
 exports.updateUserData = catchAsync(async (req, res, next) => {
   await User.findByIdAndUpdate(
     req.user.id,

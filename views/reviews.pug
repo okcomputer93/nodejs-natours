@@ -1,0 +1,9 @@
+extends base
+
+block append head
+  link(rel="stylesheet", href="/js/app.css")
+  script(src="/js/app.js", defer)
+
+block content
+  main.main
+    div#app

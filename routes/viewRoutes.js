@@ -21,6 +21,7 @@ router.get(
   authController.protect,
   viewsController.getMyFavTours
 );
+router.get('/my-reviews', authController.protect, viewsController.getMyReviews);
 router.get(
   '/confirmYourEmail',
   authController.restrictToNoEmailConfirmed,
