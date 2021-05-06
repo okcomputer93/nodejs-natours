@@ -8844,7 +8844,7 @@ var _default = {
       var _this = this;
 
       return _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-        var reviewIndex, response;
+        var reviewIndex, response, data;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -8852,22 +8852,8 @@ var _default = {
                 reviewIndex = _this.reviews.findIndex(function (review) {
                   return review.id === reviewId;
                 });
-
-                if (!(!body.review || !body.rating)) {
-                  _context.next = 6;
-                  break;
-                }
-
-                console.log(reviewIndex);
-                _this.reviews[reviewIndex].message = 'error/Please provide a review and a rating!';
-                setTimeout(function () {
-                  return _this.reviews[reviewIndex].message = '';
-                }, 3000);
-                return _context.abrupt("return");
-
-              case 6:
-                _context.prev = 6;
-                _context.next = 9;
+                _context.prev = 1;
+                _context.next = 4;
                 return fetch("http://127.0.0.1:3000/api/v1/reviews/".concat(reviewId), {
                   headers: {
                     'Content-Type': 'application/json'
@@ -8876,25 +8862,44 @@ var _default = {
                   body: JSON.stringify(body)
                 });
 
-              case 9:
+              case 4:
                 response = _context.sent;
+                _context.next = 7;
+                return response.json();
+
+              case 7:
+                data = _context.sent;
+
+                if (response.ok) {
+                  _context.next = 10;
+                  break;
+                }
+
+                throw new Error(data.message);
+
+              case 10:
                 _this.reviews[reviewIndex].message = 'success/Review successfully updated.';
                 setTimeout(function () {
                   return _this.reviews[reviewIndex].message = '';
                 }, 3000);
-                _context.next = 16;
+                _context.next = 19;
                 break;
 
               case 14:
                 _context.prev = 14;
-                _context.t0 = _context["catch"](6);
+                _context.t0 = _context["catch"](1);
+                _this.reviews[reviewIndex].message = "error/".concat(_context.t0);
+                setTimeout(function () {
+                  return _this.reviews[reviewIndex].message = '';
+                }, 3000);
+                return _context.abrupt("return");
 
-              case 16:
+              case 19:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[6, 14]]);
+        }, _callee, null, [[1, 14]]);
       }))();
     }
   },

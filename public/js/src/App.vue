@@ -33,13 +33,6 @@ export default {
       const reviewIndex = this.reviews.findIndex(
         (review) => review.id === reviewId
       );
-      if (!body.review || !body.rating) {
-        console.log(reviewIndex);
-        this.reviews[reviewIndex].message =
-          'error/Please provide a review and a rating!';
-        setTimeout(() => (this.reviews[reviewIndex].message = ''), 3000);
-        return;
-      }
       try {
         const response = await fetch(
           `http://127.0.0.1:3000/api/v1/reviews/${reviewId}`,
@@ -51,10 +44,16 @@ export default {
             body: JSON.stringify(body),
           }
         );
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message);
         this.reviews[reviewIndex].message =
           'success/Review successfully updated.';
         setTimeout(() => (this.reviews[reviewIndex].message = ''), 3000);
-      } catch (error) {}
+      } catch (error) {
+        this.reviews[reviewIndex].message = `error/${error}`;
+        setTimeout(() => (this.reviews[reviewIndex].message = ''), 3000);
+        return;
+      }
     },
   },
   async created() {
