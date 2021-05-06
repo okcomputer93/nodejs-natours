@@ -11,7 +11,6 @@ const Email = require('../utils/email');
 const Cookies = require('../utils/cookiesHandler');
 
 const twoFactorService = require('./services/twoFactorService');
-const { listenerCount } = require('stream');
 
 const signToken = (name, expiresIn) =>
   jwt.sign(name, process.env.JWT_SECRET, {
@@ -220,7 +219,6 @@ exports.verify = catchAsync(async (req, res, next) => {
   if (req.body.authToken) {
     const { authToken } = req.body;
     // const timeToken = twoFactorService.getTimeBasedToken(authToken);
-    console.log(authToken);
     if (
       !twoFactorService.verifyTwoFactorAuthenticationCode(
         authToken,
@@ -524,9 +522,8 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
 exports.logout = catchAsync(async (req, res, next) => {
   const clientCookies = new Cookies(req, res);
-  const user = await User.findById(req.user.id);
-  user.refreshToken = undefined;
-  user.save({ validateBeforeSave: false });
+  req.user.refreshToken = undefined;
+  await req.user.save({ validateBeforeSave: false });
   clientCookies.pull('jwt');
   clientCookies.pull('natoursrefreshtoken');
   res.status(200).json({ status: 'success' });
@@ -567,23 +564,20 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 
 exports.generateTwoFactorAuthenticationQRCode = catchAsync(
   async (req, res, next) => {
-    const user = await User.findById(req.user.id);
-
     const {
       otpauthUrl,
       base32,
-    } = twoFactorService.getTwoFactorAuthenticationCode(user.email);
-    user.twoFactorAuthenticationCode = base32;
-    await user.save({ validateBeforeSave: false });
+    } = twoFactorService.getTwoFactorAuthenticationCode(req.user.email);
+    req.user.twoFactorAuthenticationCode = base32;
+    await req.user.save({ validateBeforeSave: false });
     twoFactorService.respondWithQRCode(otpauthUrl, res);
   }
 );
 
 exports.DisableTwoFactorAuthenticationQRCode = catchAsync(
   async (req, res, next) => {
-    const user = await User.findById(req.user.id);
-    user.twoFactorAuthenticationCode = undefined;
-    await user.save({ validateBeforeSave: false });
+    req.user.twoFactorAuthenticationCode = undefined;
+    await req.user.save({ validateBeforeSave: false });
     res.status(200).json({
       status: 'success',
       data: {

@@ -10,6 +10,7 @@ const bookModalDate = document.querySelector('#modal-date-book');
 const dateOptions = document.querySelector('#dates');
 const modalDate = document.querySelector('#modal-date');
 const closeModal = document.querySelector('.modal__close');
+const closeSmallModal = document.querySelector('.modal__close--small');
 
 //* PasswordModal DOM Elements
 const modalPassword = document.querySelector('#modal-password');
@@ -130,16 +131,18 @@ const poblatePasswordModal = () => {
   modalPasswordContent.insertAdjacentHTML('afterbegin', passwordMarkup);
 };
 
-if (closeModal) {
-  closeModal.addEventListener('click', () => {
-    if (modalDate) {
-      modalDate.style.display = 'none';
-    }
-    if (modalPassword) {
-      clearPasswordModal();
-      btnTwoFactor.disabled = false;
-    }
-  });
+if (closeModal || closeSmallModal) {
+  [closeModal, closeSmallModal].forEach((closeButton) =>
+    closeButton?.addEventListener('click', () => {
+      if (modalDate) {
+        modalDate.style.display = 'none';
+      }
+      if (modalPassword) {
+        clearPasswordModal();
+        btnTwoFactor.disabled = false;
+      }
+    })
+  );
 }
 
 const printTwoFactorRequirements = (messageTitle, blob = null) => {
