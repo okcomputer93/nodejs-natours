@@ -11,6 +11,7 @@ const Email = require('../utils/email');
 const Cookies = require('../utils/cookiesHandler');
 
 const twoFactorService = require('./services/twoFactorService');
+const { listenerCount } = require('stream');
 
 const signToken = (name, expiresIn) =>
   jwt.sign(name, process.env.JWT_SECRET, {
@@ -54,10 +55,13 @@ const refreshJWTToken = async (req, res, next) => {
 
   const user = await User.findOne({
     _id: req.user.id,
-    refreshToken: refreshTokenEnc,
   });
 
-  if (!user) return next(new AppError('Invalid refresh token'));
+  if (user.refreshToken !== refreshTokenEnc) {
+    clientCookies.pull('jwt');
+    clientCookies.pull('natoursrefreshtoken');
+    return next(new AppError('JWT expired, Please log in again', 403));
+  }
   const jwtToken = signToken({ id: user.id }, process.env.JWT_EXPIRES_IN);
   clientCookies.push(
     jwtToken,
@@ -387,10 +391,9 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   // Grant access to protected route
   req.user = currentUser;
+  if (decoded.exp * 1000 < Date.now()) await refreshJWTToken(req, res, next);
   res.locals.user = currentUser;
   res.locals.user.isTwoFactorEnabled = !!currentUser.twoFactorAuthenticationCode;
-
-  if (decoded.exp < Date.now()) await refreshJWTToken(req, res, next);
   next();
 });
 
