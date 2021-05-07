@@ -533,7 +533,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 });
 
 exports.logout = catchAsync(async (req, res, next) => {
-  console.log('hello');
   const clientCookies = new Cookies(req, res);
   req.user.refreshToken = undefined;
   await req.user.save({ validateBeforeSave: false });

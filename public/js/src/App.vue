@@ -34,16 +34,13 @@ export default {
         (review) => review.id === reviewId
       );
       try {
-        const response = await fetch(
-          `http://127.0.0.1:3000/api/v1/reviews/${reviewId}`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            method: 'PATCH',
-            body: JSON.stringify(body),
-          }
-        );
+        const response = await fetch(`/api/v1/reviews/${reviewId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          method: 'PATCH',
+          body: JSON.stringify(body),
+        });
         const data = await response.json();
         if (!response.ok) throw new Error(data.message);
         this.reviews[reviewIndex].message =
@@ -57,9 +54,7 @@ export default {
     },
   },
   async created() {
-    const response = await fetch(
-      'http://127.0.0.1:3000/api/v1/reviews/my-reviews'
-    );
+    const response = await fetch('/api/v1/reviews/my-reviews');
     const data = await response.json();
     const reviews = data.data.reviews.map((review) => {
       return {

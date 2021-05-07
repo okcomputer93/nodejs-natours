@@ -2,7 +2,7 @@ import { showAlert } from '../alerts';
 
 const ajax = async ({ url, method, headers, body }) => {
   try {
-    return await fetch(`http://127.0.0.1:3000/api/v1/${url}`, {
+    return await fetch(`/api/v1/${url}`, {
       method,
       mode: 'cors',
       headers,

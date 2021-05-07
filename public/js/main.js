@@ -8555,7 +8555,6 @@ exports.default = void 0;
 //
 var _default = {
   mounted: function mounted() {
-    console.log('hello world');
   }
 };
 exports.default = _default;

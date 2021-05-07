@@ -9,13 +9,15 @@
     "debug": "ndb server.js",
     "watch:js": "parcel watch --no-hmr ./public/js/index.js  --out-dir ./public/js --out-file bundle.js --public-url ./",
     "watch:vue": "parcel watch --no-hmr ./public/js/src/main.js  --out-dir ./public/js --out-file app.js --public-url ./",
-    "build:js": "parcel watch --no-hmr ./public/js/index.js  --out-dir ./public/js --out-file bundle.js --public-url ./"
+    "build:js": "parcel build ./public/js/index.js  --out-dir ./public/js --out-file bundle.js --public-url ./",
+    "build:vue": "parcel build ./public/js/src/main.js  --out-dir ./public/js --out-file app.js --public-url ./"
   },
   "author": "okcomputer",
   "license": "ISC",
   "dependencies": {
     "@babel/polyfill": "^7.12.1",
     "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
     "cookie-parser": "^1.4.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
