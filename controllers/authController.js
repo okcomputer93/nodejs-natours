@@ -395,6 +395,18 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
+exports.onlyUnauth = (req, res, next) => {
+  const clientCookies = new Cookies(req, res);
+
+  if (
+    clientCookies.exist('jwt') ||
+    clientCookies.exist('natoursrefreshtoken') ||
+    clientCookies.exist('natoursnoemail')
+  )
+    return res.status(301).redirect('back');
+  next();
+};
+
 // Only for rendered pages, no errors!
 exports.isLoggedIn = async (req, res, next) => {
   const clientCookies = new Cookies(req, res);
@@ -521,6 +533,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 });
 
 exports.logout = catchAsync(async (req, res, next) => {
+  console.log('hello');
   const clientCookies = new Cookies(req, res);
   req.user.refreshToken = undefined;
   await req.user.save({ validateBeforeSave: false });
