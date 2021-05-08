@@ -1,5 +1,6 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const Tour = require('../models/tourModel');
+const User = require('../models/userModel');
 const Booking = require('../models/bookingModel');
 const catchAsync = require('../utils/catchAsync');
 const factory = require('./handlerFactory');
@@ -45,14 +46,18 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
             images: [`https://www.natours.dev/img/tours/${tour.imageCover}`],
           },
           unit_amount: tour.price * 100,
+          metadata: {
+            tour_date: date,
+          },
         },
         quantity: 1,
       },
     ],
     mode: 'payment',
-    success_url: `${req.protocol}://${req.get('host')}/?tourId=${
-      req.params.tourId
-    }&user=${req.user.id}&price=${tour.price}&tourDate=${req.query.date}`,
+    // success_url: `${req.protocol}://${req.get('host')}/?tourId=${
+    //   req.params.tourId
+    // }&user=${req.user.id}&price=${tour.price}&tourDate=${req.query.date}`,
+    success_url: `${req.protocol}://${req.get('host')}/my-tours`,
     cancel_url: `${req.protocol}://${req.get('host')}/?tourId=${
       req.params.tourId
     }&user=${req.user.id}&price=${tour.price}&tourDate=${
@@ -67,33 +72,33 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createBookingCheckout = catchAsync(async (req, res, next) => {
-  //TODO: Unsecure: Everyone can make booking without paying, just hitting this endpoint
-  const { tourId, user, price, tourDate, cancel } = req.query;
+// exports.createBookingCheckout = catchAsync(async (req, res, next) => {
+//   //TODO: Unsecure: Everyone can make booking without paying, just hitting this endpoint
+//   const { tourId, user, price, tourDate, cancel } = req.query;
 
-  //TODO: Temporary solution: A participant is deleted everytime you hit this endpoint with cancel=true
-  if (cancel) {
-    const tour = await Tour.findById(tourId);
-    const formatedDate = new Date(tourDate).toString();
-    const day = tour.startDates.findIndex(
-      (element) => new Date(element).toString() === formatedDate
-    );
-    tour.participants = tour.participants.map((el, index) =>
-      index === day ? el - 1 : el
-    );
-    await tour.save();
+//   //TODO: Temporary solution: A participant is deleted everytime you hit this endpoint with cancel=true
+//   if (cancel) {
+//     const tour = await Tour.findById(tourId);
+//     const formatedDate = new Date(tourDate).toString();
+//     const day = tour.startDates.findIndex(
+//       (element) => new Date(element).toString() === formatedDate
+//     );
+//     tour.participants = tour.participants.map((el, index) =>
+//       index === day ? el - 1 : el
+//     );
+//     await tour.save();
 
-    //* JIJI you tricky boy :^)
-    return res.redirect(`${req.protocol}://${req.get('host')}/`);
-  }
+//     //* JIJI you tricky boy :^)
+//     return res.redirect(`${req.protocol}://${req.get('host')}/`);
+//   }
 
-  // No query string then next()
-  if (!tourId && !user && !price && !tourDate) return next();
-  await Booking.create({ tour: tourId, user, price, tourDate });
+//   // No query string then next()
+//   if (!tourId && !user && !price && !tourDate) return next();
+//   await Booking.create({ tour: tourId, user, price, tourDate });
 
-  // Redirect without query string
-  res.redirect(req.originalUrl.split('?')[0]);
-});
+//   // Redirect without query string
+//   res.redirect(req.originalUrl.split('?')[0]);
+// });
 
 exports.setTourUserIds = (req, res, next) => {
   if (!req.body.tour) req.body.tour = req.params.tourId;
@@ -101,6 +106,32 @@ exports.setTourUserIds = (req, res, next) => {
   if (!req.body.user) req.body.user = req.user.id;
 
   next();
+};
+
+const createBookingCheckout = async (session) => {
+  const tourId = session.client_reference_id;
+  const userId = (await User.findOne({ email: session.customer_email })).id;
+  const price = session.line_items[0].unit_amount / 100;
+  const tourDate = session.line_items[0].metadata.tour_date;
+  await Booking.create({ tour: tourId, userId, price, tourDate });
+};
+
+exports.webhookCheckout = (req, res, next) => {
+  const signature = req.header['stripe-signature'];
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (error) {
+    return res.status(400).send(`Webhook error: ${error.message}`);
+  }
+  if (event.type === 'checkout.session.complete')
+    createBookingCheckout(event.data.object);
+
+  res.status(200).json({ received: true });
 };
 
 exports.getAllBookings = factory.getAll(Booking);
