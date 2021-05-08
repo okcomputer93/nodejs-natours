@@ -7,7 +7,8 @@ class Cookies {
   push(val, name, lifeTime = 24) {
     const cookieOptions = {
       expires: new Date(Date.now() + lifeTime * 60 * 60 * 1000),
-      secure: process.env.NODE_ENV === 'production',
+      secure:
+        this.req.secure || this.req.headers('x-forwarded-proto') === 'https',
       httpOnly: true,
     };
     this.res.cookie(name, val, cookieOptions);
