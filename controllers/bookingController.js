@@ -115,7 +115,7 @@ exports.setTourUserIds = (req, res, next) => {
 const createBookingCheckout = async (session) => {
   const tourId = session.client_reference_id;
   const userId = (await User.findOne({ email: session.customer_email })).id;
-  const price = session.display_items[0].unit_amount / 100;
+  const price = session.amount_total / 100;
   const tourDate = session.metadata.tour_date;
   await Booking.create({ tour: tourId, userId, price, tourDate });
 };
