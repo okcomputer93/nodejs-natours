@@ -154,6 +154,7 @@ const cancelIntent = async (session) => {
 
 exports.webhookCancelIntent = (req, res, next) => {
   const signature = req.headers['stripe-signature'];
+  console.log(req);
   let event;
   try {
     event = stripe.webhooks.constructEvent(
