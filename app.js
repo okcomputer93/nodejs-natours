@@ -102,6 +102,12 @@ app.post(
   bookingController.webhookCheckout
 );
 
+app.post(
+  '/webhook-cancel-intent',
+  express.raw(),
+  bookingController.webhookCancelIntent
+);
+
 // Body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
@@ -111,8 +117,6 @@ app.use(
     limit: '10kb',
   })
 );
-
-app.post('/webhook-cancel-intent', bookingController.webhookCancelIntent);
 
 // Data sanitization against NoQSL query injection
 app.use(mongoSanitize());
