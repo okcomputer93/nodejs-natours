@@ -154,13 +154,12 @@ const cancelIntent = async (session) => {
 
 exports.webhookCancelIntent = (req, res, next) => {
   const signature = req.headers['stripe-signature'];
-  console.log(signature);
   let event;
   try {
     event = stripe.webhooks.constructEvent(
       req.body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET
+      process.env.STRIPE_CANCEL_WEBHOOK_SECRET
     );
   } catch (error) {
     return res.status(400).send(`Webhook error: ${error.message}`);

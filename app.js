@@ -104,7 +104,7 @@ app.post(
 
 app.post(
   '/webhook-cancel-intent',
-  express.raw(),
+  express.raw({ type: 'application/json' }),
   bookingController.webhookCancelIntent
 );
 
