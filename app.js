@@ -102,6 +102,12 @@ app.post(
   bookingController.webhookCheckout
 );
 
+app.post(
+  '/webhook-cancel-intent',
+  express.raw({ type: 'application/json' }),
+  bookingController.webhookCancelIntent
+);
+
 // Body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());

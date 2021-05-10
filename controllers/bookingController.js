@@ -138,6 +138,36 @@ exports.webhookCheckout = (req, res, next) => {
   res.status(200).json({ received: true });
 };
 
+const cancelIntent = async (session) => {
+  const tourId = session.client_reference_id;
+  const tourDate = session.metadata.tour_date;
+  const tour = await Tour.findById(tourId);
+  const formatedDate = new Date(tourDate).toString();
+  const day = tour.startDates.findIndex(
+    (element) => new Date(element).toString() === formatedDate
+  );
+  tour.participants = tour.participants.map((el, index) =>
+    index === day ? el - 1 : el
+  );
+  await tour.save();
+};
+
+exports.webhookCancelIntent = (req, res, next) => {
+  const signature = req.headers['stripe-signature'];
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (error) {
+    return res.status(400).send(`Webhook error: ${error.message}`);
+  }
+  if (event.type === 'payment_intent.canceled') cancelIntent(event.data.object);
+  res.status(200).json({ received: true });
+};
+
 exports.getAllBookings = factory.getAll(Booking);
 
 exports.getBooking = factory.getOne(Booking);
