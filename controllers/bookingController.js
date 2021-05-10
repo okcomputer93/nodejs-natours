@@ -62,11 +62,7 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
     //   req.params.tourId
     // }&user=${req.user.id}&price=${tour.price}&tourDate=${req.query.date}`,
     success_url: `${req.protocol}://${req.get('host')}/my-tours`,
-    cancel_url: `${req.protocol}://${req.get('host')}/?tourId=${
-      req.params.tourId
-    }&user=${req.user.id}&price=${tour.price}&tourDate=${
-      req.query.date
-    }&cancel=true`,
+    cancel_url: `${req.protocol}://${req.get('host')}/`,
   });
 
   // 3) Create session as respone
@@ -75,34 +71,6 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
     session,
   });
 });
-
-// exports.createBookingCheckout = catchAsync(async (req, res, next) => {
-//   //TODO: Unsecure: Everyone can make booking without paying, just hitting this endpoint
-//   const { tourId, user, price, tourDate, cancel } = req.query;
-
-//   //TODO: Temporary solution: A participant is deleted everytime you hit this endpoint with cancel=true
-//   if (cancel) {
-//     const tour = await Tour.findById(tourId);
-//     const formatedDate = new Date(tourDate).toString();
-//     const day = tour.startDates.findIndex(
-//       (element) => new Date(element).toString() === formatedDate
-//     );
-//     tour.participants = tour.participants.map((el, index) =>
-//       index === day ? el - 1 : el
-//     );
-//     await tour.save();
-
-//     //* JIJI you tricky boy :^)
-//     return res.redirect(`${req.protocol}://${req.get('host')}/`);
-//   }
-
-//   // No query string then next()
-//   if (!tourId && !user && !price && !tourDate) return next();
-//   await Booking.create({ tour: tourId, user, price, tourDate });
-
-//   // Redirect without query string
-//   res.redirect(req.originalUrl.split('?')[0]);
-// });
 
 exports.setTourUserIds = (req, res, next) => {
   if (!req.body.tour) req.body.tour = req.params.tourId;
@@ -164,7 +132,7 @@ exports.webhookCancelIntent = (req, res, next) => {
   } catch (error) {
     return res.status(400).send(`Webhook error: ${error.message}`);
   }
-  if (event.type === 'payment_intent.canceled') cancelIntent(event.data.object);
+  if (event.type === 'setup_intent.canceled') cancelIntent(event.data.object);
   res.status(200).json({ received: true });
 };
 
