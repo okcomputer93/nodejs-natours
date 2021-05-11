@@ -114,9 +114,10 @@ const cancelIntent = async (session) => {
   const day = tour.startDates.findIndex(
     (element) => new Date(element).toString() === formatedDate
   );
-  tour.participants = tour.participants.map((el, index) =>
-    index === day ? el - 1 : el
-  );
+  tour.participants = tour.participants.map((el, index) => {
+    if (index === day) return el > 0 ? el - 1 : 0;
+    return el;
+  });
   await tour.save();
 };
 
