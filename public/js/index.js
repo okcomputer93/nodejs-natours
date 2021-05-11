@@ -31,6 +31,8 @@ const formReview = document.querySelector('#form-review');
 
 const cardContainer = document.querySelector('.card-container');
 
+const alertMessage = document.querySelector('body').dataset.alert;
+
 // VALUES
 
 // DELEGATION
@@ -293,3 +295,5 @@ if (cardContainer) {
     // }
   });
 }
+
+if (alertMessage) showAlert('success', alertMessage, 20);
