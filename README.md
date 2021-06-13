@@ -1,12 +1,12 @@
 # Natours Application
 
-Built using Nodejs, Express, MongoDB, Mongoose, JS & Vue.
+Built using Nodejs, Express, MongoDB, Mongoose, JS & Vue. Includes frontend and backend development.
 
-## I accomplish most of the challenge on this course:
+## I accomplished most of the proposed challenges on this course:
 
 ### API:
 
-- Implement restruction that users can only review a tour that they have actually booked.
+- Implement restriction that users can only review a tour that they have actually booked.
 - Implement nested booking routed.
 - Improve tour dates: add a participants and a soldOut field to each date. When a user books, they need to select one of the dates.
 - Implement advanced authentication features: confirm user email, keep users logged in with refresh tokens, implement two-factor authentication.
